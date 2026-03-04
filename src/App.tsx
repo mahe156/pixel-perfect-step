@@ -26,6 +26,7 @@ import CreatorEarnings from "./pages/creator/CreatorEarnings";
 import CreatorPayouts from "./pages/creator/CreatorPayouts";
 import CreatorProfile from "./pages/creator/CreatorProfile";
 import CreatorKYC from "./pages/creator/CreatorKYC";
+import CreatorSettings from "./pages/creator/CreatorSettings";
 
 // Brand pages
 import BrandDashboard from "./pages/brand/BrandDashboard";
@@ -87,7 +88,7 @@ const App = () => (
               <Route path="payouts" element={<CreatorPayouts />} />
               <Route path="profile" element={<CreatorProfile />} />
               <Route path="kyc" element={<CreatorKYC />} />
-              <Route path="settings" element={<PlaceholderPage title="Settings" />} />
+              <Route path="settings" element={<CreatorSettings />} />
             </Route>
 
             {/* Brand routes */}

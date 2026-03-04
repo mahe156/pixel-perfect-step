@@ -14,6 +14,88 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_logs: {
+        Row: {
+          action: string
+          admin_id: string | null
+          created_at: string | null
+          details: Json | null
+          id: string
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action: string
+          admin_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_logs_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bio_verifications: {
+        Row: {
+          apify_run_id: string | null
+          created_at: string | null
+          creator_id: string | null
+          expires_at: string | null
+          id: string
+          platform: Database["public"]["Enums"]["platform_type"]
+          status: string | null
+          verification_code: string
+          verified_at: string | null
+        }
+        Insert: {
+          apify_run_id?: string | null
+          created_at?: string | null
+          creator_id?: string | null
+          expires_at?: string | null
+          id?: string
+          platform: Database["public"]["Enums"]["platform_type"]
+          status?: string | null
+          verification_code: string
+          verified_at?: string | null
+        }
+        Update: {
+          apify_run_id?: string | null
+          created_at?: string | null
+          creator_id?: string | null
+          expires_at?: string | null
+          id?: string
+          platform?: Database["public"]["Enums"]["platform_type"]
+          status?: string | null
+          verification_code?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bio_verifications_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brand_profiles: {
         Row: {
           company_logo_url: string | null
