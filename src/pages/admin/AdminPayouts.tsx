@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Search, CheckCircle2, Clock, XCircle, IndianRupee, Send, AlertTriangle } from "lucide-react";
+import { Search, CheckCircle2, Clock, Send, AlertTriangle, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,14 +11,24 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { formatINR } from "@/lib/format";
 import MetricCard from "@/components/shared/MetricCard";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
-const mockPayouts = [
-  { id: "p1", creator: "Priya Sharma", gross: 29400, tds: 2940, net: 26460, method: "upi", upi_id: "priya@paytm", status: "pending", period: "Feb 2026", created_at: "2026-03-01" },
-  { id: "p2", creator: "Anita K", gross: 22680, tds: 2268, net: 20412, method: "bank", bank: "HDFC ****1234", status: "pending", period: "Feb 2026", created_at: "2026-03-01" },
-  { id: "p3", creator: "Sneha Patel", gross: 45000, tds: 4500, net: 40500, method: "upi", upi_id: "sneha@upi", status: "processing", period: "Jan 2026", created_at: "2026-02-01" },
-  { id: "p4", creator: "Rahul Verma", gross: 18000, tds: 1800, net: 16200, method: "bank", bank: "SBI ****5678", status: "paid", period: "Jan 2026", created_at: "2026-02-01", processed_at: "2026-02-03" },
-  { id: "p5", creator: "Arjun Das", gross: 9000, tds: 900, net: 8100, method: "upi", upi_id: "arjun@gpay", status: "failed", period: "Jan 2026", created_at: "2026-02-01", failure_reason: "Invalid UPI ID" },
-];
+interface PayoutRow {
+  id: string;
+  creator_id: string | null;
+  gross_amount: number;
+  tds_amount: number;
+  net_amount: number;
+  payment_method: string;
+  upi_id: string | null;
+  bank_account_number: string | null;
+  bank_ifsc: string | null;
+  status: string;
+  created_at: string;
+  failure_reason: string | null;
+  period_start: string | null;
+  period_end: string | null;
+}
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   pending: { label: "Pending", className: "bg-warning/20 text-warning" },
@@ -28,13 +38,43 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 };
 
 const AdminPayouts = () => {
+  const [payouts, setPayouts] = useState<PayoutRow[]>([]);
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState("pending");
   const [selected, setSelected] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = mockPayouts.filter((p) => {
+  useEffect(() => { fetchPayouts(); }, []);
+
+  const fetchPayouts = async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("payouts")
+      .select("*")
+      .order("created_at", { ascending: false });
+    setPayouts((data as PayoutRow[]) || []);
+    setLoading(false);
+  };
+
+  const processPayout = async (id: string) => {
+    const { error } = await supabase.from("payouts").update({ status: "processing", initiated_at: new Date().toISOString() }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Payout processing initiated");
+    fetchPayouts();
+  };
+
+  const bulkProcess = async () => {
+    for (const id of selected) {
+      await supabase.from("payouts").update({ status: "processing", initiated_at: new Date().toISOString() }).eq("id", id);
+    }
+    toast.success(`${selected.length} payouts sent for processing`);
+    setSelected([]);
+    fetchPayouts();
+  };
+
+  const filtered = payouts.filter((p) => {
     if (tab !== "all" && p.status !== tab) return false;
-    if (search && !p.creator.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search && !p.id.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
 
@@ -44,39 +84,41 @@ const AdminPayouts = () => {
     setSelected(selected.length === ids.length ? [] : ids);
   };
 
-  const bulkProcess = () => {
-    toast.success(`${selected.length} payouts sent for processing`);
-    setSelected([]);
-  };
-
-  const pendingTotal = mockPayouts.filter((p) => p.status === "pending").reduce((s, p) => s + p.net, 0);
-  const paidTotal = mockPayouts.filter((p) => p.status === "paid").reduce((s, p) => s + p.net, 0);
+  const pendingTotal = payouts.filter((p) => p.status === "pending").reduce((s, p) => s + Number(p.net_amount), 0);
+  const processingTotal = payouts.filter((p) => p.status === "processing").reduce((s, p) => s + Number(p.net_amount), 0);
+  const paidTotal = payouts.filter((p) => p.status === "paid").reduce((s, p) => s + Number(p.net_amount), 0);
+  const failedTotal = payouts.filter((p) => p.status === "failed").reduce((s, p) => s + Number(p.net_amount), 0);
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display font-extrabold text-2xl text-foreground">Payout Manager</h1>
-          <p className="text-sm text-muted-foreground">Process and track creator payouts.</p>
+          <p className="text-sm text-muted-foreground">{payouts.length} total payouts.</p>
         </div>
-        {selected.length > 0 && (
-          <Button className="gap-2" onClick={bulkProcess}>
-            <Send className="w-4 h-4" />Process {selected.length} Payouts
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={fetchPayouts} disabled={loading}>
+            <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />
           </Button>
-        )}
+          {selected.length > 0 && (
+            <Button className="gap-2" onClick={bulkProcess}>
+              <Send className="w-4 h-4" />Process {selected.length}
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <MetricCard icon={<Clock className="w-5 h-5" />} label="Pending" value={pendingTotal} prefix="₹" color="warning" />
-        <MetricCard icon={<Send className="w-5 h-5" />} label="Processing" value={40500} prefix="₹" color="info" />
-        <MetricCard icon={<CheckCircle2 className="w-5 h-5" />} label="Paid (Total)" value={paidTotal} prefix="₹" color="success" />
-        <MetricCard icon={<AlertTriangle className="w-5 h-5" />} label="Failed" value={8100} prefix="₹" color="premium" />
+        <MetricCard icon={<Send className="w-5 h-5" />} label="Processing" value={processingTotal} prefix="₹" color="info" />
+        <MetricCard icon={<CheckCircle2 className="w-5 h-5" />} label="Paid" value={paidTotal} prefix="₹" color="success" />
+        <MetricCard icon={<AlertTriangle className="w-5 h-5" />} label="Failed" value={failedTotal} prefix="₹" color="premium" />
       </div>
 
       <div className="glass rounded-xl p-4 flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Search creator…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          <Input placeholder="Search by ID…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="bg-muted/50">
@@ -94,8 +136,7 @@ const AdminPayouts = () => {
             <TableHeader>
               <TableRow className="border-border/50">
                 {tab === "pending" && <TableHead className="w-10"><Checkbox checked={selected.length > 0 && selected.length === filtered.filter((p) => p.status === "pending").length} onCheckedChange={toggleAll} /></TableHead>}
-                <TableHead>Creator</TableHead>
-                <TableHead>Period</TableHead>
+                <TableHead>Payout ID</TableHead>
                 <TableHead>Method</TableHead>
                 <TableHead className="text-right">Gross</TableHead>
                 <TableHead className="text-right">TDS</TableHead>
@@ -106,39 +147,39 @@ const AdminPayouts = () => {
             </TableHeader>
             <TableBody>
               {filtered.map((p) => {
-                const sc = statusConfig[p.status];
+                const sc = statusConfig[p.status || "pending"];
                 return (
                   <TableRow key={p.id} className="border-border/50">
                     {tab === "pending" && (
                       <TableCell>{p.status === "pending" && <Checkbox checked={selected.includes(p.id)} onCheckedChange={() => toggleSelect(p.id)} />}</TableCell>
                     )}
-                    <TableCell className="font-medium text-foreground text-sm">{p.creator}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{p.period}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-xs uppercase">{p.method}</Badge>
-                      <p className="text-xs text-muted-foreground mt-0.5">{p.method === "upi" ? p.upi_id : p.bank}</p>
+                      <p className="font-medium text-foreground text-sm">{p.id.slice(0, 8)}...</p>
+                      <p className="text-xs text-muted-foreground">{new Date(p.created_at).toLocaleDateString()}</p>
                     </TableCell>
-                    <TableCell className="text-right font-mono text-sm">{formatINR(p.gross)}</TableCell>
-                    <TableCell className="text-right font-mono text-sm text-destructive">-{formatINR(p.tds)}</TableCell>
-                    <TableCell className="text-right font-mono text-sm font-medium">{formatINR(p.net)}</TableCell>
-                    <TableCell><Badge className={`${sc.className} text-xs`}>{sc.label}</Badge></TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs uppercase">{p.payment_method}</Badge>
+                      <p className="text-xs text-muted-foreground mt-0.5">{p.payment_method === "upi" ? p.upi_id : p.bank_account_number ? `****${p.bank_account_number.slice(-4)}` : ""}</p>
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-sm">{formatINR(Number(p.gross_amount))}</TableCell>
+                    <TableCell className="text-right font-mono text-sm text-destructive">-{formatINR(Number(p.tds_amount))}</TableCell>
+                    <TableCell className="text-right font-mono text-sm font-medium">{formatINR(Number(p.net_amount))}</TableCell>
+                    <TableCell><Badge className={`${sc?.className} text-xs`}>{sc?.label}</Badge></TableCell>
                     <TableCell className="text-right">
                       {p.status === "pending" && (
-                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => toast.success(`Processing payout to ${p.creator}`)}>
+                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => processPayout(p.id)}>
                           <Send className="w-3 h-3 mr-1" />Process
                         </Button>
                       )}
                       {p.status === "failed" && (
-                        <Button size="sm" variant="outline" className="h-7 text-xs text-warning border-warning/30" onClick={() => toast.success(`Retrying payout to ${p.creator}`)}>
-                          Retry
-                        </Button>
+                        <Button size="sm" variant="outline" className="h-7 text-xs text-warning border-warning/30" onClick={() => processPayout(p.id)}>Retry</Button>
                       )}
                     </TableCell>
                   </TableRow>
                 );
               })}
               {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No payouts match your filters.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No payouts match your filters.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
