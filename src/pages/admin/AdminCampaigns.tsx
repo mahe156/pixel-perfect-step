@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Search, Megaphone, Eye, IndianRupee, Pause, Play, XCircle, CheckCircle2, ExternalLink } from "lucide-react";
+import { Search, Megaphone, Pause, Play, XCircle, Plus, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,8 +8,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatINR, formatViews } from "@/lib/format";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   draft: { label: "Draft", className: "bg-muted text-muted-foreground" },
@@ -20,35 +26,106 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   cancelled: { label: "Cancelled", className: "bg-destructive/20 text-destructive" },
 };
 
-const mockCampaigns = [
-  { id: "1", title: "Summer Fashion Haul", brand: "Acme Fashion", platform: "youtube", status: "active", cpm_rate: 120, total_budget: 500000, spent_amount: 234000, total_submissions: 45, total_verified_views: 1950000, created_at: "2026-02-01" },
-  { id: "2", title: "Reel Challenge", brand: "Acme Fashion", platform: "instagram", status: "active", cpm_rate: 80, total_budget: 200000, spent_amount: 89000, total_submissions: 28, total_verified_views: 1112500, created_at: "2026-02-15" },
-  { id: "3", title: "Product Launch Buzz", brand: "TrendyWear Inc", platform: "both", status: "draft", cpm_rate: 150, total_budget: 1000000, spent_amount: 0, total_submissions: 0, total_verified_views: 0, created_at: "2026-02-20" },
-  { id: "4", title: "Diwali Special", brand: "Acme Fashion", platform: "youtube", status: "completed", cpm_rate: 100, total_budget: 300000, spent_amount: 298000, total_submissions: 60, total_verified_views: 2980000, created_at: "2025-10-01" },
-  { id: "5", title: "Tech Review Collab", brand: "GadgetZone", platform: "youtube", status: "paused", cpm_rate: 200, total_budget: 750000, spent_amount: 150000, total_submissions: 10, total_verified_views: 750000, created_at: "2026-01-15" },
-];
+interface CampaignRow {
+  id: string;
+  title: string;
+  platform: string;
+  status: string;
+  cpm_rate: number;
+  total_budget: number;
+  spent_amount: number;
+  total_submissions: number;
+  total_verified_views: number;
+  created_at: string;
+  brand_id: string | null;
+}
 
 const AdminCampaigns = () => {
+  const { profile } = useAuth();
+  const [campaigns, setCampaigns] = useState<CampaignRow[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [form, setForm] = useState({
+    title: "", description: "", platform: "youtube" as "youtube" | "instagram" | "both",
+    cpm_rate: "80", total_budget: "100000", max_creators: "100",
+    min_followers: "1000", content_guidelines: "",
+    start_date: "", end_date: "",
+  });
+  const [creating, setCreating] = useState(false);
 
-  const filtered = mockCampaigns.filter((c) => {
-    if (search && !c.title.toLowerCase().includes(search.toLowerCase()) && !c.brand.toLowerCase().includes(search.toLowerCase())) return false;
+  useEffect(() => { fetchCampaigns(); }, []);
+
+  const fetchCampaigns = async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("campaigns")
+      .select("id, title, platform, status, cpm_rate, total_budget, spent_amount, total_submissions, total_verified_views, created_at, brand_id")
+      .order("created_at", { ascending: false });
+    setCampaigns((data as CampaignRow[]) || []);
+    setLoading(false);
+  };
+
+  const updateStatus = async (id: string, status: "active" | "paused" | "cancelled" | "completed") => {
+    const { error } = await supabase.from("campaigns").update({ status }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Campaign ${status}`);
+    fetchCampaigns();
+  };
+
+  const createCampaign = async () => {
+    if (!form.title || !form.description) { toast.error("Title and description required"); return; }
+    setCreating(true);
+    const { error } = await supabase.from("campaigns").insert({
+      title: form.title,
+      description: form.description,
+      platform: form.platform,
+      cpm_rate: Number(form.cpm_rate),
+      total_budget: Number(form.total_budget),
+      max_creators: Number(form.max_creators),
+      min_followers: Number(form.min_followers),
+      content_guidelines: form.content_guidelines,
+      start_date: form.start_date || null,
+      end_date: form.end_date || null,
+      brand_id: profile?.id || null,
+      status: "active" as const,
+    });
+    setCreating(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Campaign created!");
+    setCreateOpen(false);
+    setForm({ title: "", description: "", platform: "youtube", cpm_rate: "80", total_budget: "100000", max_creators: "100", min_followers: "1000", content_guidelines: "", start_date: "", end_date: "" });
+    fetchCampaigns();
+  };
+
+  const filtered = campaigns.filter((c) => {
+    if (search && !c.title.toLowerCase().includes(search.toLowerCase())) return false;
     if (statusFilter !== "all" && c.status !== statusFilter) return false;
     return true;
   });
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-      <div>
-        <h1 className="font-display font-extrabold text-2xl text-foreground">All Campaigns</h1>
-        <p className="text-sm text-muted-foreground">Manage and monitor all platform campaigns.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display font-extrabold text-2xl text-foreground">All Campaigns</h1>
+          <p className="text-sm text-muted-foreground">{campaigns.length} campaigns total.</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={fetchCampaigns} disabled={loading}>
+            <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />
+          </Button>
+          <Button size="sm" onClick={() => setCreateOpen(true)}>
+            <Plus className="w-4 h-4 mr-1" />Create Campaign
+          </Button>
+        </div>
       </div>
 
       <div className="glass rounded-xl p-4 flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Search by title or brand…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          <Input placeholder="Search by title…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <Tabs value={statusFilter} onValueChange={setStatusFilter}>
           <TabsList className="bg-muted/50">
@@ -66,8 +143,8 @@ const AdminCampaigns = () => {
             <TableHeader>
               <TableRow className="border-border/50">
                 <TableHead>Campaign</TableHead>
-                <TableHead>Brand</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="text-right">CPM</TableHead>
                 <TableHead className="text-right">Budget</TableHead>
                 <TableHead className="text-right">Views</TableHead>
                 <TableHead className="text-right">Subs</TableHead>
@@ -76,50 +153,116 @@ const AdminCampaigns = () => {
             </TableHeader>
             <TableBody>
               {filtered.map((c) => {
-                const sc = statusConfig[c.status] || statusConfig.draft;
-                const pct = c.total_budget > 0 ? (c.spent_amount / c.total_budget) * 100 : 0;
+                const sc = statusConfig[c.status || "draft"] || statusConfig.draft;
+                const pct = c.total_budget > 0 ? (Number(c.spent_amount) / Number(c.total_budget)) * 100 : 0;
                 return (
                   <TableRow key={c.id} className="border-border/50">
                     <TableCell>
                       <div>
                         <p className="font-medium text-foreground text-sm">{c.title}</p>
-                        <p className="text-xs text-muted-foreground capitalize">{c.platform} · {c.created_at}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{c.platform} · {new Date(c.created_at).toLocaleDateString()}</p>
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm text-foreground">{c.brand}</TableCell>
                     <TableCell><Badge className={`${sc.className} text-xs`}>{sc.label}</Badge></TableCell>
+                    <TableCell className="text-right font-mono text-sm">₹{c.cpm_rate}</TableCell>
                     <TableCell className="text-right">
                       <div className="space-y-1">
-                        <span className="text-xs font-mono">{formatINR(c.spent_amount)} / {formatINR(c.total_budget)}</span>
+                        <span className="text-xs font-mono">{formatINR(Number(c.spent_amount))} / {formatINR(Number(c.total_budget))}</span>
                         <Progress value={pct} className="h-1" />
                       </div>
                     </TableCell>
-                    <TableCell className="text-right font-mono text-sm">{formatViews(c.total_verified_views)}</TableCell>
+                    <TableCell className="text-right font-mono text-sm">{formatViews(Number(c.total_verified_views))}</TableCell>
                     <TableCell className="text-right font-mono text-sm">{c.total_submissions}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
                         {c.status === "active" && (
-                          <Button size="sm" variant="outline" className="h-7 text-xs text-warning border-warning/30" onClick={() => toast.success("Campaign paused")}>
+                          <Button size="sm" variant="outline" className="h-7 text-xs text-warning border-warning/30" onClick={() => updateStatus(c.id, "paused")}>
                             <Pause className="w-3 h-3 mr-1" />Pause
                           </Button>
                         )}
                         {c.status === "paused" && (
-                          <Button size="sm" variant="outline" className="h-7 text-xs text-success border-success/30" onClick={() => toast.success("Campaign resumed")}>
+                          <Button size="sm" variant="outline" className="h-7 text-xs text-success border-success/30" onClick={() => updateStatus(c.id, "active")}>
                             <Play className="w-3 h-3 mr-1" />Resume
                           </Button>
                         )}
-                        <Button size="sm" variant="outline" className="h-7 text-xs text-destructive border-destructive/30" onClick={() => toast.success("Campaign cancelled")}>
-                          <XCircle className="w-3 h-3 mr-1" />Cancel
-                        </Button>
+                        {c.status !== "cancelled" && c.status !== "completed" && (
+                          <Button size="sm" variant="outline" className="h-7 text-xs text-destructive border-destructive/30" onClick={() => updateStatus(c.id, "cancelled")}>
+                            <XCircle className="w-3 h-3 mr-1" />Cancel
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
                 );
               })}
+              {filtered.length === 0 && (
+                <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No campaigns found.</TableCell></TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+
+      {/* Create Campaign Dialog */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="glass border-border max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle className="font-display">Create New Campaign</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Title</Label>
+              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Campaign title" />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Campaign description & brief" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Platform</Label>
+                <Select value={form.platform} onValueChange={(v: any) => setForm({ ...form, platform: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="youtube">YouTube</SelectItem>
+                    <SelectItem value="instagram">Instagram</SelectItem>
+                    <SelectItem value="both">Both</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>CPM Rate (₹)</Label>
+                <Input type="number" value={form.cpm_rate} onChange={(e) => setForm({ ...form, cpm_rate: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Total Budget (₹)</Label>
+                <Input type="number" value={form.total_budget} onChange={(e) => setForm({ ...form, total_budget: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Max Creators</Label>
+                <Input type="number" value={form.max_creators} onChange={(e) => setForm({ ...form, max_creators: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Min Followers</Label>
+                <Input type="number" value={form.min_followers} onChange={(e) => setForm({ ...form, min_followers: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Start Date</Label>
+                <Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>End Date</Label>
+                <Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Content Guidelines</Label>
+              <Textarea value={form.content_guidelines} onChange={(e) => setForm({ ...form, content_guidelines: e.target.value })} placeholder="Guidelines for creators..." />
+            </div>
+            <Button onClick={createCampaign} disabled={creating} className="w-full">
+              {creating ? "Creating..." : "Create Campaign"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 };
