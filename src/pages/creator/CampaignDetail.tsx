@@ -31,7 +31,7 @@ const demoCampaign = {
   id: "demo-1",
   title: "boAt Airdopes X Review",
   description: "Create an honest, engaging review of the boAt Airdopes X wireless earbuds. Show the unboxing, test audio quality, and share your genuine experience. The video should be at least 3 minutes long.",
-  platform: "youtube" as const,
+  platform: "both" as const,
   cpm_rate: 80,
   total_budget: 500000,
   spent_amount: 325000,
