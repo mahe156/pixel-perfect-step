@@ -10,31 +10,31 @@ const footerLinks = {
 
 const Footer = () => {
   return (
-    <footer className="border-t border-border/50 bg-card/30 pt-16 pb-8">
+    <footer className="border-t border-border/50 bg-card/30 pt-10 sm:pt-16 pb-6 sm:pb-8">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
+        <div className="grid grid-cols-2 gap-6 sm:gap-8 md:grid-cols-5 mb-8 sm:mb-12">
           {/* Logo & tagline */}
-          <div className="col-span-2 md:col-span-1">
-            <Link to="/" className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <Zap className="w-4 h-4 text-primary-foreground" />
+          <div className="col-span-2 mb-2 sm:mb-0 md:col-span-1">
+            <Link to="/" className="flex items-center gap-2 mb-2 sm:mb-3">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary flex items-center justify-center">
+                <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-foreground" />
               </div>
-              <span className="font-display font-bold text-lg text-foreground">
+              <span className="font-display font-bold text-base sm:text-lg text-foreground">
                 Clip<span className="text-primary">Rupee</span>
               </span>
             </Link>
-            <p className="text-sm text-muted-foreground leading-relaxed">
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
               India's performance-based creator marketing platform.
             </p>
           </div>
 
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category}>
-              <h4 className="font-display font-bold text-sm text-foreground mb-3">{category}</h4>
-              <ul className="space-y-2">
+              <h4 className="font-display font-bold text-xs sm:text-sm text-foreground mb-2 sm:mb-3">{category}</h4>
+              <ul className="space-y-1.5 sm:space-y-2">
                 {links.map((link) => (
                   <li key={link}>
-                    <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    <a href="#" className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors py-0.5 inline-block">
                       {link}
                     </a>
                   </li>
@@ -44,11 +44,11 @@ const Footer = () => {
           ))}
         </div>
 
-        <div className="border-t border-border/50 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-muted-foreground">
+        <div className="border-t border-border/50 pt-4 sm:pt-6 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4">
+          <p className="text-[10px] sm:text-xs text-muted-foreground">
             © 2026 ClipRupee. All rights reserved.
           </p>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 text-[10px] sm:text-xs text-muted-foreground">
             <span>Made in India</span>
             <span>🇮🇳</span>
           </div>

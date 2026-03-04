@@ -16,13 +16,13 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/30">
-      <div className="container mx-auto flex items-center justify-between h-16 px-4">
+    <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/30 safe-top">
+      <div className="container mx-auto flex items-center justify-between h-14 sm:h-16 px-4">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <Zap className="w-4 h-4 text-primary-foreground" />
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary flex items-center justify-center">
+            <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-foreground" />
           </div>
-          <span className="font-display font-bold text-lg text-foreground">
+          <span className="font-display font-bold text-base sm:text-lg text-foreground">
             Clip<span className="text-primary">Rupee</span>
           </span>
         </Link>
@@ -51,10 +51,11 @@ const Navbar = () => {
 
         {/* Mobile toggle */}
         <button
-          className="md:hidden text-foreground"
+          className="md:hidden text-foreground p-2 -mr-2 active:bg-muted/30 rounded-lg transition-colors"
           onClick={() => setMobileOpen(!mobileOpen)}
+          aria-label="Toggle menu"
         >
-          {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+          {mobileOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
 
@@ -67,22 +68,31 @@ const Navbar = () => {
             exit={{ opacity: 0, height: 0 }}
             className="md:hidden glass border-t border-border/30"
           >
-            <div className="container mx-auto px-4 py-4 flex flex-col gap-3">
+            <div className="container mx-auto px-4 py-3 flex flex-col gap-1">
               {navLinks.map((link) => (
                 <a
                   key={link.label}
                   href={link.href}
-                  className="text-sm text-muted-foreground py-2"
+                  className="text-sm text-muted-foreground py-3 px-3 rounded-lg active:bg-muted/30 transition-colors"
                   onClick={() => setMobileOpen(false)}
                 >
                   {link.label}
                 </a>
               ))}
-              <div className="flex gap-3 pt-2">
-                <Button variant="ghost" size="sm" className="flex-1 text-muted-foreground">
+              <div className="flex gap-3 pt-3 pb-1">
+                <Button
+                  variant="ghost"
+                  size="default"
+                  className="flex-1 text-muted-foreground h-11"
+                  onClick={() => { navigate("/login"); setMobileOpen(false); }}
+                >
                   Log In
                 </Button>
-                <Button size="sm" className="flex-1 bg-primary text-primary-foreground">
+                <Button
+                  size="default"
+                  className="flex-1 bg-primary text-primary-foreground h-11"
+                  onClick={() => { navigate("/signup"); setMobileOpen(false); }}
+                >
                   Get Started
                 </Button>
               </div>
