@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import MetricCard from "@/components/shared/MetricCard";
-import { Users, Megaphone, Wallet, AlertTriangle, FileText, Activity } from "lucide-react";
+import { Users, Megaphone, Wallet, AlertTriangle, FileText, Activity, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { formatINR } from "@/lib/format";
 import { Link } from "react-router-dom";
 import { useRealtimeAdminFeed } from "@/hooks/useRealtime";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -19,6 +20,25 @@ const AdminDashboard = () => {
   });
   const [feed, setFeed] = useState<{ id: string; text: string; time: string; type: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncingViews, setSyncingViews] = useState(false);
+
+  const handleSyncAllViews = async () => {
+    setSyncingViews(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-views", {
+        body: {},
+      });
+      if (error) throw error;
+      const synced = data?.synced ?? 0;
+      toast.success(`Views updated! ${synced} submission(s) synced.`);
+      fetchStats();
+    } catch (err: any) {
+      console.error("sync-views error:", err);
+      toast.error("Failed to sync views: " + (err.message || "Unknown error"));
+    } finally {
+      setSyncingViews(false);
+    }
+  };
 
   useEffect(() => {
     fetchStats();
@@ -84,6 +104,13 @@ const AdminDashboard = () => {
       <div>
         <h1 className="font-display font-extrabold text-2xl text-foreground">Admin Dashboard</h1>
         <p className="text-sm text-muted-foreground">Platform overview and management.</p>
+      </div>
+
+      <div className="flex justify-end">
+        <Button onClick={handleSyncAllViews} disabled={syncingViews} variant="outline" className="gap-2">
+          <RefreshCw className={`w-4 h-4 ${syncingViews ? "animate-spin" : ""}`} />
+          {syncingViews ? "Syncing Views..." : "Update Views"}
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
