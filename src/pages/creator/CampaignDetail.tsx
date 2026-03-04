@@ -110,8 +110,15 @@ const CampaignDetail = () => {
     return null;
   };
 
+  const isValidUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
   const handleSubmit = async () => {
     if (!submitUrl || !selectedAccountId) return;
+
+    if (!id || !isValidUUID(id)) {
+      toast.error("This is a demo campaign. Submissions require a real campaign.");
+      return;
+    }
 
     const platform = detectPlatform(submitUrl);
     if (!platform) {
