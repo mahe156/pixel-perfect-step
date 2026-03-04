@@ -6,6 +6,17 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const normalizeInstagramUrl = (url: string) => {
+  try {
+    const parsed = new URL(url.trim());
+    parsed.search = "";
+    parsed.hash = "";
+    return parsed.toString().replace(/\/$/, "");
+  } catch {
+    return url.trim().replace(/[?#].*$/, "").replace(/\/$/, "");
+  }
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -122,68 +133,100 @@ Deno.serve(async (req) => {
     // Sync Instagram views
     if (igSubmissions.length > 0) {
       const postUrls = igSubmissions.map((s) => s.content_url);
+      const inputVariants = [
+        { directUrls: postUrls, resultsLimit: postUrls.length },
+        { usernames: postUrls, resultsLimit: postUrls.length },
+        { username: postUrls, resultsLimit: postUrls.length },
+      ];
 
-      const runRes = await fetch(
-        `https://api.apify.com/v2/acts/apify~instagram-post-scraper/runs?token=${APIFY_API_TOKEN}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            directUrls: postUrls,
-            resultsLimit: postUrls.length,
-          }),
-        }
-      );
-
-      if (!runRes.ok) {
-        const errBody = await runRes.text();
-        throw new Error(`Apify IG scraper failed [${runRes.status}]: ${errBody}`);
-      }
-
-      const runData = await runRes.json();
-      const runId = runData.data?.id;
-
+      let items: any[] = [];
       let completed = false;
-      for (let i = 0; i < 24; i++) {
-        await new Promise((r) => setTimeout(r, 5000));
-        const statusRes = await fetch(
-          `https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY_API_TOKEN}`
-        );
-        const statusData = await statusRes.json();
+      let lastError = "";
 
-        if (statusData.data?.status === "SUCCEEDED") {
-          const datasetId = statusData.data.defaultDatasetId;
-          const itemsRes = await fetch(
-            `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_API_TOKEN}`
-          );
-          const items = await itemsRes.json();
-
-          for (const item of items) {
-            const views = item.videoPlayCount || item.videoViewCount || item.videoPlays || item.likesCount || 0;
-            const itemUrl = item.inputUrl || item.url || item.shortCode || "";
-            const sub = igSubmissions.find(
-              (s) => s.content_url === itemUrl || 
-                     itemUrl.includes(s.content_url) || 
-                     s.content_url.includes(itemUrl) ||
-                     s.ig_media_id === item.id
-            );
-            if (sub) {
-              results.push({ id: sub.id, views });
-            }
+      for (const input of inputVariants) {
+        const runRes = await fetch(
+          `https://api.apify.com/v2/acts/apify~instagram-post-scraper/runs?token=${APIFY_API_TOKEN}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(input),
           }
-          completed = true;
-          break;
-        } else if (
-          statusData.data?.status === "FAILED" ||
-          statusData.data?.status === "ABORTED"
-        ) {
-          break;
+        );
+
+        if (!runRes.ok) {
+          lastError = await runRes.text();
+          continue;
         }
+
+        const runData = await runRes.json();
+        const runId = runData.data?.id;
+
+        if (!runId) {
+          lastError = "Missing Apify run id";
+          continue;
+        }
+
+        for (let i = 0; i < 24; i++) {
+          await new Promise((r) => setTimeout(r, 5000));
+          const statusRes = await fetch(
+            `https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY_API_TOKEN}`
+          );
+          const statusData = await statusRes.json();
+
+          if (statusData.data?.status === "SUCCEEDED") {
+            const datasetId = statusData.data.defaultDatasetId;
+            const itemsRes = await fetch(
+              `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_API_TOKEN}`
+            );
+            items = await itemsRes.json();
+            completed = true;
+            break;
+          }
+
+          if (
+            statusData.data?.status === "FAILED" ||
+            statusData.data?.status === "ABORTED"
+          ) {
+            lastError = JSON.stringify(statusData.data || {});
+            break;
+          }
+        }
+
+        if (completed) break;
       }
 
-      if (!completed) {
+      if (completed) {
+        for (const item of items) {
+          const views =
+            item.videoPlayCount ||
+            item.videoViewCount ||
+            item.videoPlays ||
+            item.likesCount ||
+            0;
+          const itemUrl = item.inputUrl || item.url || item.shortCode || "";
+          const normalizedItemUrl = normalizeInstagramUrl(String(itemUrl));
+
+          const sub = igSubmissions.find((s) => {
+            const normalizedSubmissionUrl = normalizeInstagramUrl(s.content_url);
+            return (
+              normalizedSubmissionUrl === normalizedItemUrl ||
+              normalizedItemUrl.includes(normalizedSubmissionUrl) ||
+              normalizedSubmissionUrl.includes(normalizedItemUrl) ||
+              s.ig_media_id === item.id
+            );
+          });
+
+          if (sub) {
+            results.push({ id: sub.id, views });
+          }
+        }
+      } else {
         igSubmissions.forEach((s) =>
-          results.push({ id: s.id, views: 0, error: "Scraper timed out" })
+          results.push({
+            id: s.id,
+            views: 0,
+            error: `Scraper failed${lastError ? `: ${lastError}` : ""}`,
+          })
         );
       }
     }
