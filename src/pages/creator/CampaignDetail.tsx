@@ -1,18 +1,30 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { formatINR, formatViews } from "@/lib/format";
 import {
   ArrowLeft, Eye, Users, Youtube, Instagram, Calendar, CheckCircle, AlertTriangle,
-  ExternalLink, Send, Clock,
+  ExternalLink, Send, Clock, Loader2, Shield,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+
+interface ConnectedAccount {
+  id: string;
+  platform: string;
+  handle: string;
+  bio_verified: boolean;
+}
 
 // Demo campaign detail
 const demoCampaign = {
@@ -50,29 +62,125 @@ const leaderboard = [
 const CampaignDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const [submitUrl, setSubmitUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([]);
+  const [selectedAccountId, setSelectedAccountId] = useState<string>("");
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
 
   const campaign = demoCampaign;
   const daysLeft = Math.max(0, Math.ceil((new Date(campaign.end_date).getTime() - Date.now()) / 86400000));
   const budgetUsed = (campaign.spent_amount / campaign.total_budget) * 100;
 
-  const handleSubmit = () => {
-    if (!submitUrl) return;
-    const isYT = submitUrl.includes("youtube.com") || submitUrl.includes("youtu.be");
-    const isIG = submitUrl.includes("instagram.com");
-    if (!isYT && !isIG) {
+  // Fetch connected accounts when dialog opens
+  useEffect(() => {
+    if (dialogOpen && profile?.id) {
+      fetchConnectedAccounts();
+    }
+  }, [dialogOpen, profile?.id]);
+
+  const fetchConnectedAccounts = async () => {
+    setLoadingAccounts(true);
+    const { data } = await supabase
+      .from("connected_accounts")
+      .select("id, platform, handle, bio_verified")
+      .eq("user_id", profile!.id)
+      .eq("is_active", true)
+      .eq("bio_verified", true);
+
+    if (data) {
+      // Filter by campaign platform
+      const campaignPlatform = campaign.platform as string;
+      const platformAccounts = data.filter((a) =>
+        campaignPlatform === "both" || a.platform === campaignPlatform
+      ) as ConnectedAccount[];
+      setConnectedAccounts(platformAccounts);
+      if (platformAccounts.length === 1) {
+        setSelectedAccountId(platformAccounts[0].id);
+      }
+    }
+    setLoadingAccounts(false);
+  };
+
+  const detectPlatform = (url: string): "youtube" | "instagram" | null => {
+    if (url.includes("youtube.com") || url.includes("youtu.be")) return "youtube";
+    if (url.includes("instagram.com")) return "instagram";
+    return null;
+  };
+
+  const handleSubmit = async () => {
+    if (!submitUrl || !selectedAccountId) return;
+
+    const platform = detectPlatform(submitUrl);
+    if (!platform) {
       toast.error("Please enter a valid YouTube or Instagram URL");
       return;
     }
+
+    // Validate URL matches selected account platform
+    const selectedAccount = connectedAccounts.find((a) => a.id === selectedAccountId);
+    if (!selectedAccount) {
+      toast.error("Please select a verified account");
+      return;
+    }
+
+    if (selectedAccount.platform !== platform) {
+      toast.error(`URL is for ${platform} but selected account is ${selectedAccount.platform}`);
+      return;
+    }
+
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
+    try {
+      // Extract video/reel ID
+      let ytVideoId: string | null = null;
+      let igMediaId: string | null = null;
+
+      if (platform === "youtube") {
+        const match = submitUrl.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+        ytVideoId = match ? match[1] : null;
+      }
+
+      // Insert submission into DB
+      const { data: submission, error } = await supabase
+        .from("submissions")
+        .insert({
+          campaign_id: id, // Use route param; in production this would be a real campaign ID
+          creator_id: profile!.id,
+          content_url: submitUrl,
+          platform,
+          yt_video_id: ytVideoId,
+          ig_media_id: igMediaId,
+          status: "pending_review" as const,
+        })
+        .select("id")
+        .single();
+
+      if (error) throw error;
+
+      // Immediately trigger view sync for this submission
+      if (submission?.id) {
+        supabase.functions.invoke("sync-views", {
+          body: { submission_id: submission.id },
+        }).then(({ data, error }) => {
+          if (error) {
+            console.error("Initial view sync failed:", error);
+          } else {
+            console.log("Initial view sync completed:", data);
+          }
+        });
+      }
+
       setDialogOpen(false);
       setSubmitUrl("");
-      toast.success("Link submitted! It will be reviewed shortly.");
-    }, 1500);
+      setSelectedAccountId("");
+      toast.success("Link submitted! Initial view count is being tracked. It will be reviewed shortly.");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to submit. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -116,29 +224,73 @@ const CampaignDetail = () => {
                   <DialogTitle className="font-display text-foreground">Submit Your Content Link</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 pt-2">
-                  <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground">Paste your YouTube video or Instagram Reel URL</p>
-                    <Input
-                      value={submitUrl}
-                      onChange={(e) => setSubmitUrl(e.target.value)}
-                      placeholder="https://youtube.com/watch?v=..."
-                      className="bg-muted border-border"
-                    />
-                  </div>
-                  {submitUrl && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      {submitUrl.includes("youtube") || submitUrl.includes("youtu.be") ? (
-                        <><Youtube className="w-3 h-3 text-info" /> YouTube detected</>
-                      ) : submitUrl.includes("instagram") ? (
-                        <><Instagram className="w-3 h-3 text-premium" /> Instagram detected</>
-                      ) : (
-                        <><AlertTriangle className="w-3 h-3 text-destructive" /> Not a valid platform URL</>
-                      )}
+                  {/* Account selector */}
+                  {loadingAccounts ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="w-4 h-4 animate-spin" /> Loading your verified accounts...
                     </div>
+                  ) : connectedAccounts.length === 0 ? (
+                    <div className="bg-warning/10 border border-warning/30 rounded-lg p-4 text-center space-y-2">
+                      <Shield className="w-6 h-6 text-warning mx-auto" />
+                      <p className="text-sm font-medium text-foreground">No verified accounts found</p>
+                      <p className="text-xs text-muted-foreground">You need to connect & verify at least one {campaign.platform} account on your Profile page before submitting.</p>
+                      <Button size="sm" variant="outline" onClick={() => { setDialogOpen(false); navigate("/creator/profile"); }}>
+                        Go to Profile
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        <label className="text-xs font-medium text-foreground">Submit from verified account</label>
+                        <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
+                          <SelectTrigger className="bg-muted border-border">
+                            <SelectValue placeholder="Select account..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {connectedAccounts.map((acc) => (
+                              <SelectItem key={acc.id} value={acc.id}>
+                                <div className="flex items-center gap-2">
+                                  {acc.platform === "youtube" ? <Youtube className="w-3 h-3 text-info" /> : <Instagram className="w-3 h-3 text-premium" />}
+                                  @{acc.handle}
+                                  <CheckCircle className="w-3 h-3 text-success" />
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-medium text-foreground">Content URL</label>
+                        <Input
+                          value={submitUrl}
+                          onChange={(e) => setSubmitUrl(e.target.value)}
+                          placeholder="https://youtube.com/watch?v=... or https://instagram.com/reel/..."
+                          className="bg-muted border-border"
+                        />
+                      </div>
+
+                      {submitUrl && (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          {detectPlatform(submitUrl) === "youtube" ? (
+                            <><Youtube className="w-3 h-3 text-info" /> YouTube detected</>
+                          ) : detectPlatform(submitUrl) === "instagram" ? (
+                            <><Instagram className="w-3 h-3 text-premium" /> Instagram detected</>
+                          ) : (
+                            <><AlertTriangle className="w-3 h-3 text-destructive" /> Not a valid platform URL</>
+                          )}
+                        </div>
+                      )}
+
+                      <Button
+                        onClick={handleSubmit}
+                        disabled={submitting || !submitUrl || !selectedAccountId}
+                        className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                      >
+                        {submitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting...</> : "Submit Link"}
+                      </Button>
+                    </>
                   )}
-                  <Button onClick={handleSubmit} disabled={submitting || !submitUrl} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                    {submitting ? "Submitting..." : "Submit Link"}
-                  </Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -244,7 +396,7 @@ const CampaignDetail = () => {
             </tr>
           </thead>
           <tbody>
-            {leaderboard.map((l, i) => (
+            {leaderboard.map((l) => (
               <tr key={l.rank} className="border-b border-border/30 hover:bg-muted/30">
                 <td className="p-4">
                   <span className={`w-6 h-6 rounded-full inline-flex items-center justify-center text-xs font-bold ${
