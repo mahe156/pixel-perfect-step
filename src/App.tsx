@@ -39,6 +39,12 @@ import BrandSettings from "./pages/brand/BrandSettings";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminCampaigns from "./pages/admin/AdminCampaigns";
+import AdminSubmissions from "./pages/admin/AdminSubmissions";
+import AdminPayouts from "./pages/admin/AdminPayouts";
+import AdminFraud from "./pages/admin/AdminFraud";
+import AdminSettings from "./pages/admin/AdminSettings";
 
 const queryClient = new QueryClient();
 
@@ -113,12 +119,12 @@ const App = () => (
               }
             >
               <Route path="dashboard" element={<AdminDashboard />} />
-              <Route path="users" element={<PlaceholderPage title="User Management" />} />
-              <Route path="campaigns" element={<PlaceholderPage title="All Campaigns" />} />
-              <Route path="submissions" element={<PlaceholderPage title="Submission Review" />} />
-              <Route path="payouts" element={<PlaceholderPage title="Payout Manager" />} />
-              <Route path="fraud" element={<PlaceholderPage title="Fraud Flags" />} />
-              <Route path="settings" element={<PlaceholderPage title="Platform Settings" />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="campaigns" element={<AdminCampaigns />} />
+              <Route path="submissions" element={<AdminSubmissions />} />
+              <Route path="payouts" element={<AdminPayouts />} />
+              <Route path="fraud" element={<AdminFraud />} />
+              <Route path="settings" element={<AdminSettings />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
