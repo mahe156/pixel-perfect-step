@@ -124,13 +124,15 @@ Deno.serve(async (req) => {
       const postUrls = igSubmissions.map((s) => s.content_url);
 
       const runRes = await fetch(
-        `https://api.apify.com/v2/acts/apify~instagram-post-scraper/runs?token=${APIFY_API_TOKEN}`,
+        `https://api.apify.com/v2/acts/apify~instagram-scraper/runs?token=${APIFY_API_TOKEN}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             directUrls: postUrls,
+            resultsType: "posts",
             resultsLimit: postUrls.length,
+            addParentData: false,
           }),
         }
       );
