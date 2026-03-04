@@ -60,57 +60,57 @@ const testimonials = [
 
 const Testimonials = () => {
   return (
-    <section className="py-24">
+    <section className="py-16 sm:py-24">
       <div className="container mx-auto px-4">
         <motion.div
-          className="text-center mb-12"
+          className="text-center mb-8 sm:mb-12"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
         >
-          <h2 className="font-display font-extrabold text-3xl md:text-4xl text-foreground mb-3">
+          <h2 className="font-display font-extrabold text-2xl sm:text-3xl md:text-4xl text-foreground mb-2 sm:mb-3">
             Trusted by India's Top Creators
           </h2>
         </motion.div>
 
         {/* Horizontal scroll on mobile, grid on desktop */}
-        <div className="flex md:grid md:grid-cols-3 gap-6 overflow-x-auto pb-4 md:pb-0 snap-x snap-mandatory md:snap-none">
+        <div className="flex md:grid md:grid-cols-3 gap-3 sm:gap-6 overflow-x-auto pb-4 md:pb-0 snap-x snap-mandatory md:snap-none -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
           {testimonials.map((t, i) => (
             <motion.div
               key={t.name}
-              className="glass rounded-xl p-6 min-w-[300px] md:min-w-0 snap-start"
+              className="glass rounded-xl p-4 sm:p-6 min-w-[260px] sm:min-w-[300px] md:min-w-0 snap-start flex-shrink-0 md:flex-shrink"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.08 }}
             >
               {/* Stars */}
-              <div className="flex gap-0.5 mb-3">
+              <div className="flex gap-0.5 mb-2.5 sm:mb-3">
                 {[...Array(5)].map((_, j) => (
-                  <Star key={j} className="w-3.5 h-3.5 text-warning fill-warning" />
+                  <Star key={j} className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-warning fill-warning" />
                 ))}
               </div>
 
-              <p className="text-sm text-foreground/90 mb-4 italic leading-relaxed">
+              <p className="text-xs sm:text-sm text-foreground/90 mb-3 sm:mb-4 italic leading-relaxed">
                 "{t.quote}"
               </p>
 
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">
+              <div className="flex items-center gap-2.5 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] sm:text-xs font-bold">
                   {t.avatar}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-foreground">{t.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {t.niche} · {t.followers} · {t.platform}
+                  <p className="text-xs sm:text-sm font-semibold text-foreground">{t.name}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">
+                    {t.niche} · {t.followers}
                   </p>
                 </div>
               </div>
 
-              <div className="mt-3 pt-3 border-t border-border/50">
-                <span className="text-xs text-muted-foreground">Earned </span>
-                <span className="text-sm font-bold text-success font-mono">{t.earned}</span>
-                <span className="text-xs text-muted-foreground"> this month</span>
+              <div className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-border/50">
+                <span className="text-[10px] sm:text-xs text-muted-foreground">Earned </span>
+                <span className="text-xs sm:text-sm font-bold text-success font-mono">{t.earned}</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground"> this month</span>
               </div>
             </motion.div>
           ))}

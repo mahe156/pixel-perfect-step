@@ -62,40 +62,41 @@ const platformColor = {
 
 const CampaignShowcase = () => {
   return (
-    <section className="py-24 bg-card/30">
+    <section className="py-16 sm:py-24 bg-card/30">
       <div className="container mx-auto px-4">
         <motion.div
-          className="text-center mb-12"
+          className="text-center mb-8 sm:mb-12"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
         >
-          <h2 className="font-display font-extrabold text-3xl md:text-4xl text-foreground mb-3">
+          <h2 className="font-display font-extrabold text-2xl sm:text-3xl md:text-4xl text-foreground mb-2 sm:mb-3">
             Live Campaigns
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Join active campaigns and start earning today
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        {/* Horizontal scroll on mobile, grid on desktop */}
+        <div className="flex md:grid md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto overflow-x-auto pb-4 md:pb-0 snap-x snap-mandatory md:snap-none -mx-4 px-4 md:mx-auto md:px-0 scrollbar-hide">
           {campaigns.map((campaign, i) => (
             <motion.div
               key={campaign.title}
-              className="glass-hover rounded-xl overflow-hidden"
+              className="glass-hover rounded-xl overflow-hidden min-w-[280px] sm:min-w-[300px] md:min-w-0 snap-start flex-shrink-0 md:flex-shrink"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
             >
-              <div className="p-6">
+              <div className="p-5 sm:p-6">
                 {/* Brand + Platform */}
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-foreground">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-foreground">
                       {campaign.brand.charAt(0)}
                     </div>
-                    <span className="text-sm font-medium text-foreground">{campaign.brand}</span>
+                    <span className="text-xs sm:text-sm font-medium text-foreground">{campaign.brand}</span>
                   </div>
                   <span className={`badge-pill border text-xs ${platformColor[campaign.platform]}`}>
                     {platformIcon[campaign.platform]}
@@ -103,19 +104,19 @@ const CampaignShowcase = () => {
                 </div>
 
                 {/* Title */}
-                <h3 className="font-display font-bold text-foreground mb-3">
+                <h3 className="font-display font-bold text-sm sm:text-base text-foreground mb-2 sm:mb-3">
                   {campaign.title}
                 </h3>
 
                 {/* CPM */}
-                <div className="text-2xl font-bold text-primary font-mono mb-4">
+                <div className="text-xl sm:text-2xl font-bold text-primary font-mono mb-3 sm:mb-4">
                   ₹{campaign.cpm}
-                  <span className="text-sm font-normal text-muted-foreground"> /1,000 views</span>
+                  <span className="text-xs sm:text-sm font-normal text-muted-foreground"> /1,000 views</span>
                 </div>
 
                 {/* Budget bar */}
-                <div className="mb-4">
-                  <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                <div className="mb-3 sm:mb-4">
+                  <div className="flex justify-between text-[10px] sm:text-xs text-muted-foreground mb-1">
                     <span>Budget Used</span>
                     <span>{Math.round((campaign.spent / campaign.budget) * 100)}%</span>
                   </div>
@@ -126,7 +127,7 @@ const CampaignShowcase = () => {
                 </div>
 
                 {/* Stats row */}
-                <div className="flex items-center justify-between text-xs text-muted-foreground mb-4">
+                <div className="flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground mb-3 sm:mb-4">
                   <span className="flex items-center gap-1">
                     <Users className="w-3 h-3" />
                     {campaign.creators} creators
@@ -138,18 +139,18 @@ const CampaignShowcase = () => {
                 </div>
 
                 {/* Tags */}
-                <div className="flex flex-wrap gap-1.5 mb-4">
+                <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-3 sm:mb-4">
                   {campaign.tags.map((tag) => (
-                    <span key={tag} className="badge-pill bg-muted text-muted-foreground text-[10px]">
+                    <span key={tag} className="badge-pill bg-muted text-muted-foreground text-[9px] sm:text-[10px]">
                       {tag}
                     </span>
                   ))}
-                  <span className="badge-pill bg-muted text-muted-foreground text-[10px]">
+                  <span className="badge-pill bg-muted text-muted-foreground text-[9px] sm:text-[10px]">
                     Ends {campaign.endDate}
                   </span>
                 </div>
 
-                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" size="sm">
+                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-9 sm:h-10 text-xs sm:text-sm" size="sm">
                   View Campaign
                 </Button>
               </div>
