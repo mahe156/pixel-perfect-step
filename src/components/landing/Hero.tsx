@@ -3,11 +3,13 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Play, Users } from "lucide-react";
 import AnimatedNumber from "@/components/shared/AnimatedNumber";
+import { useNavigate } from "react-router-dom";
 
 const PARTICLE_COUNT = 35;
 
 const Hero = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -108,6 +110,7 @@ const Hero = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button
               size="lg"
+              onClick={() => navigate("/signup")}
               className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 py-6 rounded-xl font-semibold animate-pulse-glow"
             >
               <Users className="w-5 h-5 mr-2" />
@@ -116,6 +119,7 @@ const Hero = () => {
             <Button
               size="lg"
               variant="outline"
+              onClick={() => navigate("/signup")}
               className="border-border text-foreground hover:bg-muted text-base px-8 py-6 rounded-xl font-semibold"
             >
               List a Campaign
