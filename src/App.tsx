@@ -27,8 +27,17 @@ import CreatorPayouts from "./pages/creator/CreatorPayouts";
 import CreatorProfile from "./pages/creator/CreatorProfile";
 import CreatorKYC from "./pages/creator/CreatorKYC";
 
-// Brand/Admin pages
+// Brand pages
 import BrandDashboard from "./pages/brand/BrandDashboard";
+import BrandCampaigns from "./pages/brand/BrandCampaigns";
+import BrandCampaignNew from "./pages/brand/BrandCampaignNew";
+import BrandCampaignDetail from "./pages/brand/BrandCampaignDetail";
+import BrandAnalytics from "./pages/brand/BrandAnalytics";
+import BrandCreators from "./pages/brand/BrandCreators";
+import BrandBilling from "./pages/brand/BrandBilling";
+import BrandSettings from "./pages/brand/BrandSettings";
+
+// Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 
 const queryClient = new QueryClient();
@@ -85,12 +94,13 @@ const App = () => (
               }
             >
               <Route path="dashboard" element={<BrandDashboard />} />
-              <Route path="campaigns" element={<PlaceholderPage title="My Campaigns" />} />
-              <Route path="campaigns/new" element={<PlaceholderPage title="Create Campaign" />} />
-              <Route path="analytics" element={<PlaceholderPage title="Analytics" />} />
-              <Route path="creators" element={<PlaceholderPage title="Creators" />} />
-              <Route path="billing" element={<PlaceholderPage title="Billing" />} />
-              <Route path="settings" element={<PlaceholderPage title="Settings" />} />
+              <Route path="campaigns" element={<BrandCampaigns />} />
+              <Route path="campaigns/new" element={<BrandCampaignNew />} />
+              <Route path="campaigns/:id" element={<BrandCampaignDetail />} />
+              <Route path="analytics" element={<BrandAnalytics />} />
+              <Route path="creators" element={<BrandCreators />} />
+              <Route path="billing" element={<BrandBilling />} />
+              <Route path="settings" element={<BrandSettings />} />
             </Route>
 
             {/* Admin routes */}
