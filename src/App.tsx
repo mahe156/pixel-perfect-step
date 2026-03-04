@@ -17,12 +17,30 @@ import CreatorLayout from "./layouts/CreatorLayout";
 import BrandLayout from "./layouts/BrandLayout";
 import AdminLayout from "./layouts/AdminLayout";
 
-// Dashboard pages
+// Creator pages
 import CreatorDashboard from "./pages/creator/CreatorDashboard";
+import CreatorCampaigns from "./pages/creator/CreatorCampaigns";
+import CampaignDetail from "./pages/creator/CampaignDetail";
+import CreatorSubmissions from "./pages/creator/CreatorSubmissions";
+import CreatorEarnings from "./pages/creator/CreatorEarnings";
+import CreatorPayouts from "./pages/creator/CreatorPayouts";
+import CreatorProfile from "./pages/creator/CreatorProfile";
+import CreatorKYC from "./pages/creator/CreatorKYC";
+
+// Brand/Admin pages
 import BrandDashboard from "./pages/brand/BrandDashboard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 
 const queryClient = new QueryClient();
+
+const PlaceholderPage = ({ title }: { title: string }) => (
+  <div className="space-y-4">
+    <h1 className="font-display font-extrabold text-2xl text-foreground">{title}</h1>
+    <div className="glass rounded-xl p-12 text-center text-muted-foreground">
+      This page will be built in the next part.
+    </div>
+  </div>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -47,12 +65,13 @@ const App = () => (
               }
             >
               <Route path="dashboard" element={<CreatorDashboard />} />
-              <Route path="campaigns" element={<PlaceholderPage title="Browse Campaigns" />} />
-              <Route path="submissions" element={<PlaceholderPage title="My Submissions" />} />
-              <Route path="earnings" element={<PlaceholderPage title="Earnings" />} />
-              <Route path="payouts" element={<PlaceholderPage title="Payouts" />} />
-              <Route path="profile" element={<PlaceholderPage title="Profile" />} />
-              <Route path="kyc" element={<PlaceholderPage title="KYC Verification" />} />
+              <Route path="campaigns" element={<CreatorCampaigns />} />
+              <Route path="campaigns/:id" element={<CampaignDetail />} />
+              <Route path="submissions" element={<CreatorSubmissions />} />
+              <Route path="earnings" element={<CreatorEarnings />} />
+              <Route path="payouts" element={<CreatorPayouts />} />
+              <Route path="profile" element={<CreatorProfile />} />
+              <Route path="kyc" element={<CreatorKYC />} />
               <Route path="settings" element={<PlaceholderPage title="Settings" />} />
             </Route>
 
@@ -98,16 +117,6 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
-);
-
-// Placeholder for pages not yet built
-const PlaceholderPage = ({ title }: { title: string }) => (
-  <div className="space-y-4">
-    <h1 className="font-display font-extrabold text-2xl text-foreground">{title}</h1>
-    <div className="glass rounded-xl p-12 text-center text-muted-foreground">
-      This page will be built in the next part.
-    </div>
-  </div>
 );
 
 export default App;
