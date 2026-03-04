@@ -128,7 +128,11 @@ const CampaignDetail = () => {
       setSelectedAccountId("");
       toast.success("Link submitted! Views are being tracked.");
     } catch (err: any) {
-      toast.error(err.message || "Failed to submit.");
+      if (err.code === "23505" || err.message?.includes("duplicate")) {
+        toast.error("This link has already been submitted.");
+      } else {
+        toast.error(err.message || "Failed to submit.");
+      }
     } finally {
       setSubmitting(false);
     }

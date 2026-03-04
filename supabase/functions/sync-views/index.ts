@@ -159,9 +159,13 @@ Deno.serve(async (req) => {
           const items = await itemsRes.json();
 
           for (const item of items) {
-            const views = item.videoViewCount || item.likesCount || 0;
+            const views = item.videoPlayCount || item.videoViewCount || item.videoPlays || item.likesCount || 0;
+            const itemUrl = item.inputUrl || item.url || item.shortCode || "";
             const sub = igSubmissions.find(
-              (s) => s.content_url === item.url || s.ig_media_id === item.id
+              (s) => s.content_url === itemUrl || 
+                     itemUrl.includes(s.content_url) || 
+                     s.content_url.includes(itemUrl) ||
+                     s.ig_media_id === item.id
             );
             if (sub) {
               results.push({ id: sub.id, views });
