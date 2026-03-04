@@ -1,9 +1,10 @@
-import { Bell, LogOut, Wallet } from "lucide-react";
+import { LogOut, Wallet } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { formatINR } from "@/lib/format";
+import NotificationBell from "@/components/shared/NotificationBell";
 
 interface DashboardHeaderProps {
   walletBalance?: number;
@@ -32,12 +33,7 @@ const DashboardHeader = ({ walletBalance }: DashboardHeaderProps) => {
           </div>
         )}
 
-        <button className="relative text-muted-foreground hover:text-foreground transition-colors">
-          <Bell className="w-5 h-5" />
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full text-[10px] font-bold text-primary-foreground flex items-center justify-center">
-            3
-          </span>
-        </button>
+        <NotificationBell />
 
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">
