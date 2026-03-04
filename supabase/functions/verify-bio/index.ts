@@ -45,18 +45,14 @@ Deno.serve(async (req) => {
     let input: Record<string, unknown>;
 
     if (platform === "youtube") {
-      // Use Apify YouTube Channel Scraper
-      actorId = "streamers~youtube-channel-scraper";
+      actorId = "bernardo~youtube-channel-scraper";
       input = {
         channelUrls: [`https://www.youtube.com/@${handle}`],
         maxResults: 1,
       };
     } else if (platform === "instagram") {
-      // Use Apify Instagram Profile Scraper
       actorId = "apify~instagram-profile-scraper";
-      input = {
-        usernames: [handle],
-      };
+      input = { usernames: [handle] };
     } else {
       throw new Error("Invalid platform. Use 'youtube' or 'instagram'");
     }
@@ -91,6 +87,7 @@ Deno.serve(async (req) => {
 
     // Poll for completion (max 60s)
     let verified = false;
+    let followerCount = 0;
     let attempts = 0;
     const maxAttempts = 12;
 
@@ -102,10 +99,8 @@ Deno.serve(async (req) => {
         `https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY_API_TOKEN}`
       );
       const statusData = await statusRes.json();
-      await statusRes.text().catch(() => {});
 
       if (statusData.data?.status === "SUCCEEDED") {
-        // Fetch dataset items
         const datasetId = statusData.data.defaultDatasetId;
         const itemsRes = await fetch(
           `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_API_TOKEN}`
@@ -114,7 +109,6 @@ Deno.serve(async (req) => {
 
         if (items && items.length > 0) {
           const profile = items[0];
-          // Check bio/description for verification code
           const bioText = (
             profile.channelDescription ||
             profile.biography ||
@@ -125,6 +119,8 @@ Deno.serve(async (req) => {
 
           if (bioText.includes(verification_code.toLowerCase())) {
             verified = true;
+            // Extract follower/subscriber count
+            followerCount = profile.subscriberCount || profile.followersCount || profile.followers || profile.subscribers || 0;
           }
         }
         break;
@@ -145,21 +141,43 @@ Deno.serve(async (req) => {
       })
       .eq("apify_run_id", runId);
 
-    // Update creator profile if verified
+    // If verified, upsert into connected_accounts
     if (verified) {
+      const accountData: Record<string, unknown> = {
+        user_id: userData.id,
+        platform,
+        handle,
+        platform_username: handle,
+        bio_verified: true,
+        bio_verified_at: new Date().toISOString(),
+        bio_verification_code: verification_code,
+        is_active: true,
+      };
+
+      if (platform === "youtube") {
+        accountData.subscribers = followerCount;
+      } else {
+        accountData.followers = followerCount;
+      }
+
+      // Upsert (unique on user_id, platform, handle)
+      await supabase
+        .from("connected_accounts")
+        .upsert(accountData, { onConflict: "user_id,platform,handle" });
+
+      // Also update legacy creator_profiles for backward compat
+      const legacyUpdates = platform === "youtube"
+        ? { yt_connected: true, yt_channel_name: handle, yt_subscribers: followerCount, bio_verified: true, bio_verified_at: new Date().toISOString() }
+        : { ig_connected: true, ig_username: handle, ig_followers: followerCount, bio_verified: true, bio_verified_at: new Date().toISOString() };
+
       await supabase
         .from("creator_profiles")
-        .update({
-          bio_verified: true,
-          bio_verified_at: new Date().toISOString(),
-          bio_verification_code: verification_code,
-          kyc_status: "verified",
-        })
+        .update(legacyUpdates)
         .eq("user_id", userData.id);
     }
 
     return new Response(
-      JSON.stringify({ verified, run_id: runId }),
+      JSON.stringify({ verified, run_id: runId, followers: followerCount }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

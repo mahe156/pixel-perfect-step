@@ -265,6 +265,65 @@ export type Database = {
           },
         ]
       }
+      connected_accounts: {
+        Row: {
+          bio_verification_code: string | null
+          bio_verified: boolean | null
+          bio_verified_at: string | null
+          created_at: string | null
+          followers: number | null
+          handle: string
+          id: string
+          is_active: boolean | null
+          platform: Database["public"]["Enums"]["platform_type"]
+          platform_id: string | null
+          platform_username: string | null
+          subscribers: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          bio_verification_code?: string | null
+          bio_verified?: boolean | null
+          bio_verified_at?: string | null
+          created_at?: string | null
+          followers?: number | null
+          handle: string
+          id?: string
+          is_active?: boolean | null
+          platform: Database["public"]["Enums"]["platform_type"]
+          platform_id?: string | null
+          platform_username?: string | null
+          subscribers?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          bio_verification_code?: string | null
+          bio_verified?: boolean | null
+          bio_verified_at?: string | null
+          created_at?: string | null
+          followers?: number | null
+          handle?: string
+          id?: string
+          is_active?: boolean | null
+          platform?: Database["public"]["Enums"]["platform_type"]
+          platform_id?: string | null
+          platform_username?: string | null
+          subscribers?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connected_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creator_profiles: {
         Row: {
           approved_submissions: number | null
