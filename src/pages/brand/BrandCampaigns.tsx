@@ -86,6 +86,13 @@ const BrandCampaigns = () => {
                 <div className="flex flex-col lg:flex-row lg:items-center gap-4">
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-muted overflow-hidden flex-shrink-0">
+                        {campaign.banner_url ? (
+                          <img src={campaign.banner_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-xs font-bold text-muted-foreground">{campaign.title.charAt(0)}</div>
+                        )}
+                      </div>
                       <h3 className="font-display font-bold text-foreground text-lg">{campaign.title}</h3>
                       <Badge className={`${sc.className} gap-1 text-xs`}>{sc.icon}{sc.label}</Badge>
                       <Badge variant="outline" className="text-xs capitalize">{campaign.platform}</Badge>

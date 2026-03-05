@@ -164,6 +164,7 @@ export type Database = {
       campaigns: {
         Row: {
           approved_submissions: number | null
+          banner_url: string | null
           brand_id: string | null
           brief_url: string | null
           content_guidelines: string | null
@@ -195,6 +196,7 @@ export type Database = {
         }
         Insert: {
           approved_submissions?: number | null
+          banner_url?: string | null
           brand_id?: string | null
           brief_url?: string | null
           content_guidelines?: string | null
@@ -226,6 +228,7 @@ export type Database = {
         }
         Update: {
           approved_submissions?: number | null
+          banner_url?: string | null
           brand_id?: string | null
           brief_url?: string | null
           content_guidelines?: string | null

@@ -196,8 +196,12 @@ const CreatorCampaigns = () => {
                 {/* Top row */}
                 <div className="flex items-center justify-between mb-2.5">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-xl bg-muted flex items-center justify-center text-xs font-bold text-foreground">
-                      {c.title.charAt(0)}
+                    <div className="w-10 h-10 rounded-xl bg-muted overflow-hidden flex-shrink-0">
+                      {c.banner_url ? (
+                        <img src={c.banner_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xs font-bold text-foreground">{c.title.charAt(0)}</div>
+                      )}
                     </div>
                     <span className={`badge-pill border text-[10px] flex items-center gap-1 ${platformColor[c.platform]}`}>
                       {platformIcon[c.platform]}
