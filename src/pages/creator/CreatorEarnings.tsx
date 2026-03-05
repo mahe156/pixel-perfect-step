@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import MetricCard from "@/components/shared/MetricCard";
 import { IndianRupee, Eye, TrendingUp, Calendar } from "lucide-react";
-import { formatINR } from "@/lib/format";
+import { formatINR, formatViews } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -37,57 +37,68 @@ const CreatorEarnings = () => {
   const avgCPM = stats.totalViews > 0 ? (stats.totalEarned / stats.totalViews) * 1000 : 0;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       <div>
-        <h1 className="font-display font-extrabold text-2xl text-foreground">Earnings</h1>
-        <p className="text-sm text-muted-foreground">Track your earnings across campaigns</p>
+        <h1 className="font-display font-extrabold text-xl sm:text-2xl text-foreground">Earnings</h1>
+        <p className="text-xs sm:text-sm text-muted-foreground">Track your earnings across campaigns</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard icon={<IndianRupee className="w-5 h-5" />} label="Total Earned" value={stats.totalEarned} prefix="₹" color="success" />
-        <MetricCard icon={<Eye className="w-5 h-5" />} label="Total Views" value={stats.totalViews} color="info" />
-        <MetricCard icon={<TrendingUp className="w-5 h-5" />} label="Avg CPM Earned" value={Math.round(avgCPM)} prefix="₹" color="primary" />
-        <MetricCard icon={<Calendar className="w-5 h-5" />} label="Pending Earnings" value={stats.pendingEarnings} prefix="₹" color="warning" />
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-4">
+        <MetricCard icon={<IndianRupee className="w-4 h-4 sm:w-5 sm:h-5" />} label="Total Earned" value={stats.totalEarned} prefix="₹" color="success" />
+        <MetricCard icon={<Eye className="w-4 h-4 sm:w-5 sm:h-5" />} label="Total Views" value={stats.totalViews} color="info" />
+        <MetricCard icon={<TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />} label="Avg CPM" value={Math.round(avgCPM)} prefix="₹" color="primary" />
+        <MetricCard icon={<Calendar className="w-4 h-4 sm:w-5 sm:h-5" />} label="Pending" value={stats.pendingEarnings} prefix="₹" color="warning" />
       </div>
 
-      <div className="glass rounded-xl overflow-hidden">
-        <div className="p-5 border-b border-border/50">
-          <h3 className="font-display font-bold text-foreground">Earnings by Submission</h3>
+      {/* Summary card */}
+      {submissions.length > 0 && (
+        <div className="glass rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] text-muted-foreground">Total from {submissions.length} submissions</p>
+            <p className="text-xl font-bold font-mono text-success">{formatINR(stats.totalEarned)}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] text-muted-foreground">Total Views</p>
+            <p className="text-lg font-bold font-mono text-foreground">{formatViews(stats.totalViews)}</p>
+          </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border/50">
-                <th className="text-left text-xs font-medium text-muted-foreground p-4">Submission</th>
-                <th className="text-left text-xs font-medium text-muted-foreground p-4">Platform</th>
-                <th className="text-right text-xs font-medium text-muted-foreground p-4">Views</th>
-                <th className="text-right text-xs font-medium text-muted-foreground p-4">Earned</th>
-              </tr>
-            </thead>
-            <tbody>
-              {submissions.map((s, i) => (
-                <motion.tr key={s.id} className="border-b border-border/30 hover:bg-muted/30"
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }}>
-                  <td className="p-4 text-sm font-medium text-foreground">{s.id.slice(0, 8)}...</td>
-                  <td className="p-4"><span className="badge-pill bg-muted text-muted-foreground text-[10px] capitalize">{s.platform}</span></td>
-                  <td className="p-4 text-right text-sm font-mono text-foreground">{Number(s.verified_views).toLocaleString("en-IN")}</td>
-                  <td className="p-4 text-right text-sm font-mono font-medium text-success">{formatINR(Number(s.earned_amount))}</td>
-                </motion.tr>
-              ))}
-              {submissions.length === 0 && (
-                <tr><td colSpan={4} className="p-8 text-center text-muted-foreground text-sm">No earnings yet. Submit content to campaigns to start earning!</td></tr>
-              )}
-            </tbody>
-            {submissions.length > 0 && (
-              <tfoot>
-                <tr className="bg-muted/30">
-                  <td className="p-4 text-sm font-bold text-foreground" colSpan={2}>Total</td>
-                  <td className="p-4 text-right text-sm font-mono font-bold text-foreground">{stats.totalViews.toLocaleString("en-IN")}</td>
-                  <td className="p-4 text-right text-sm font-mono font-bold text-success">{formatINR(stats.totalEarned)}</td>
-                </tr>
-              </tfoot>
-            )}
-          </table>
+      )}
+
+      {/* Card list */}
+      <div>
+        <h3 className="font-display font-bold text-sm text-foreground mb-2.5">Earnings by Submission</h3>
+        <div className="space-y-2">
+          {submissions.map((s, i) => (
+            <motion.div
+              key={s.id}
+              className="glass rounded-xl p-3.5"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.03 }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
+                    s.platform === "youtube" ? "bg-info/10 text-info" : "bg-premium/10 text-premium"
+                  }`}>
+                    {s.platform === "youtube" ? "YT" : "IG"}
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <Eye className="w-3 h-3" />
+                      {formatViews(Number(s.verified_views))} views
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm font-mono font-bold text-success">{formatINR(Number(s.earned_amount))}</p>
+              </div>
+            </motion.div>
+          ))}
+          {submissions.length === 0 && (
+            <div className="glass rounded-xl p-10 text-center text-muted-foreground text-sm">
+              No earnings yet. Submit content to campaigns to start earning!
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { formatINR, formatViews } from "@/lib/format";
 import {
   ArrowLeft, Eye, Users, Youtube, Instagram, CheckCircle, AlertTriangle,
-  Send, Loader2, Shield,
+  Send, Loader2, Shield, Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -148,9 +148,9 @@ const CampaignDetail = () => {
 
   if (!campaign) {
     return (
-      <div className="glass rounded-xl p-12 text-center text-muted-foreground">
+      <div className="glass rounded-xl p-10 text-center text-muted-foreground">
         Campaign not found.
-        <Button variant="outline" className="mt-4" onClick={() => navigate(-1)}>Go Back</Button>
+        <Button variant="outline" className="mt-4 block mx-auto" onClick={() => navigate(-1)}>Go Back</Button>
       </div>
     );
   }
@@ -159,171 +159,186 @@ const CampaignDetail = () => {
   const budgetUsed = (Number(campaign.spent_amount) / Number(campaign.total_budget)) * 100;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="w-4 h-4" /> Back to Campaigns
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 pb-4">
+      {/* Back */}
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-xs text-muted-foreground active:scale-95 transition-transform">
+        <ArrowLeft className="w-4 h-4" /> Back
       </button>
 
-      {/* Hero */}
-      <div className="glass rounded-xl p-6">
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="badge-pill bg-info/10 text-info border border-info/30 text-xs flex items-center gap-1 capitalize">
-                {campaign.platform === "youtube" ? <Youtube className="w-3 h-3" /> : <Instagram className="w-3 h-3" />} {campaign.platform}
-              </span>
-              <span className="badge-pill bg-success/10 text-success border border-success/30 text-xs capitalize">{campaign.status}</span>
-            </div>
-            <h1 className="font-display font-extrabold text-2xl text-foreground mb-2">{campaign.title}</h1>
-            <p className="text-sm text-muted-foreground mb-4">{campaign.description}</p>
-            <div className="flex flex-wrap gap-2">
-              {(campaign.niche_tags || []).map((t: string) => (
-                <span key={t} className="badge-pill bg-muted text-muted-foreground text-xs">{t}</span>
-              ))}
-              {(campaign.language_tags || []).map((t: string) => (
-                <span key={t} className="badge-pill bg-muted text-muted-foreground text-xs">{t}</span>
-              ))}
-            </div>
+      {/* Hero card */}
+      <div className="glass rounded-2xl p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <span className={`badge-pill border text-[10px] flex items-center gap-1 ${
+            campaign.platform === "youtube" ? "text-info bg-info/10 border-info/30" : "text-premium bg-premium/10 border-premium/30"
+          }`}>
+            {campaign.platform === "youtube" ? <Youtube className="w-3 h-3" /> : <Instagram className="w-3 h-3" />}
+            {campaign.platform}
+          </span>
+          <span className="badge-pill bg-success/10 text-success border border-success/30 text-[10px] capitalize">{campaign.status}</span>
+        </div>
+
+        <h1 className="font-display font-extrabold text-lg text-foreground mb-1.5">{campaign.title}</h1>
+        <p className="text-xs text-muted-foreground mb-4 line-clamp-3">{campaign.description}</p>
+
+        {/* CPM + CTA */}
+        <div className="flex items-end justify-between mb-4">
+          <div>
+            <p className="text-2xl font-bold font-mono text-primary">₹{campaign.cpm_rate}</p>
+            <p className="text-[10px] text-muted-foreground">per 1,000 views</p>
           </div>
-          <div className="lg:text-right space-y-2">
-            <p className="text-3xl font-bold font-mono text-primary">₹{campaign.cpm_rate}</p>
-            <p className="text-xs text-muted-foreground">per 1,000 views</p>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-primary text-primary-foreground hover:bg-primary/90 w-full lg:w-auto mt-2">
-                  <Send className="w-4 h-4 mr-2" /> Submit Your Link
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="glass border-border">
-                <DialogHeader>
-                  <DialogTitle className="font-display text-foreground">Submit Your Content Link</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 pt-2">
-                  {loadingAccounts ? (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Loader2 className="w-4 h-4 animate-spin" /> Loading verified accounts...
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl h-10 px-5 text-sm font-semibold active:scale-95 transition-transform">
+                <Send className="w-4 h-4 mr-1.5" /> Submit Link
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="glass border-border mx-4 rounded-2xl max-w-[calc(100vw-2rem)] sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle className="font-display text-foreground text-base">Submit Your Content Link</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-2">
+                {loadingAccounts ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Loading verified accounts...
+                  </div>
+                ) : connectedAccounts.length === 0 ? (
+                  <div className="bg-warning/10 border border-warning/30 rounded-xl p-4 text-center space-y-2">
+                    <Shield className="w-6 h-6 text-warning mx-auto" />
+                    <p className="text-sm font-medium text-foreground">No verified accounts</p>
+                    <p className="text-xs text-muted-foreground">Connect & verify an account on your Profile page first.</p>
+                    <Button size="sm" variant="outline" className="rounded-xl" onClick={() => { setDialogOpen(false); navigate("/creator/profile"); }}>Go to Profile</Button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-foreground">Verified Account</label>
+                      <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
+                        <SelectTrigger className="bg-muted border-border rounded-xl h-11"><SelectValue placeholder="Select account..." /></SelectTrigger>
+                        <SelectContent>
+                          {connectedAccounts.map((acc) => (
+                            <SelectItem key={acc.id} value={acc.id}>
+                              <div className="flex items-center gap-2">
+                                {acc.platform === "youtube" ? <Youtube className="w-3 h-3 text-info" /> : <Instagram className="w-3 h-3 text-premium" />}
+                                @{acc.handle}
+                                <CheckCircle className="w-3 h-3 text-success" />
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  ) : connectedAccounts.length === 0 ? (
-                    <div className="bg-warning/10 border border-warning/30 rounded-lg p-4 text-center space-y-2">
-                      <Shield className="w-6 h-6 text-warning mx-auto" />
-                      <p className="text-sm font-medium text-foreground">No verified accounts found</p>
-                      <p className="text-xs text-muted-foreground">Connect & verify an account on your Profile page first.</p>
-                      <Button size="sm" variant="outline" onClick={() => { setDialogOpen(false); navigate("/creator/profile"); }}>Go to Profile</Button>
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-foreground">Content URL</label>
+                      <Input
+                        value={submitUrl}
+                        onChange={(e) => setSubmitUrl(e.target.value)}
+                        placeholder="Paste your video/reel link..."
+                        className="bg-muted border-border rounded-xl h-11"
+                      />
                     </div>
-                  ) : (
-                    <>
-                      <div className="space-y-2">
-                        <label className="text-xs font-medium text-foreground">Submit from verified account</label>
-                        <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
-                          <SelectTrigger className="bg-muted border-border"><SelectValue placeholder="Select account..." /></SelectTrigger>
-                          <SelectContent>
-                            {connectedAccounts.map((acc) => (
-                              <SelectItem key={acc.id} value={acc.id}>
-                                <div className="flex items-center gap-2">
-                                  {acc.platform === "youtube" ? <Youtube className="w-3 h-3 text-info" /> : <Instagram className="w-3 h-3 text-premium" />}
-                                  @{acc.handle}
-                                  <CheckCircle className="w-3 h-3 text-success" />
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                    {submitUrl && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        {detectPlatform(submitUrl) === "youtube" ? (<><Youtube className="w-3 h-3 text-info" /> YouTube detected</>) :
+                         detectPlatform(submitUrl) === "instagram" ? (<><Instagram className="w-3 h-3 text-premium" /> Instagram detected</>) :
+                         (<><AlertTriangle className="w-3 h-3 text-destructive" /> Not a valid URL</>)}
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-medium text-foreground">Content URL</label>
-                        <Input value={submitUrl} onChange={(e) => setSubmitUrl(e.target.value)}
-                          placeholder="https://youtube.com/watch?v=... or https://instagram.com/reel/..."
-                          className="bg-muted border-border" />
-                      </div>
-                      {submitUrl && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {detectPlatform(submitUrl) === "youtube" ? (<><Youtube className="w-3 h-3 text-info" /> YouTube detected</>) :
-                           detectPlatform(submitUrl) === "instagram" ? (<><Instagram className="w-3 h-3 text-premium" /> Instagram detected</>) :
-                           (<><AlertTriangle className="w-3 h-3 text-destructive" /> Not a valid platform URL</>)}
-                        </div>
-                      )}
-                      <Button onClick={handleSubmit} disabled={submitting || !submitUrl || !selectedAccountId} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                        {submitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting...</> : "Submit Link"}
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
+                    )}
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={submitting || !submitUrl || !selectedAccountId}
+                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl h-11 font-semibold"
+                    >
+                      {submitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting...</> : "Submit Link"}
+                    </Button>
+                  </>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Tags */}
+        <div className="flex flex-wrap gap-1.5">
+          {(campaign.niche_tags || []).map((t: string) => (
+            <span key={t} className="bg-muted text-muted-foreground text-[10px] px-2.5 py-1 rounded-lg">{t}</span>
+          ))}
+          {(campaign.language_tags || []).map((t: string) => (
+            <span key={t} className="bg-muted text-muted-foreground text-[10px] px-2.5 py-1 rounded-lg">{t}</span>
+          ))}
         </div>
       </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass rounded-xl p-4 text-center">
-          <p className="text-xs text-muted-foreground mb-1">Budget Remaining</p>
-          <p className="text-lg font-bold font-mono text-foreground">{formatINR(Number(campaign.total_budget) - Number(campaign.spent_amount))}</p>
+      {/* Stats grid - 2x2 */}
+      <div className="grid grid-cols-2 gap-2.5">
+        <div className="glass rounded-xl p-3.5 text-center">
+          <p className="text-[10px] text-muted-foreground mb-1">Budget Left</p>
+          <p className="text-base font-bold font-mono text-foreground">{formatINR(Number(campaign.total_budget) - Number(campaign.spent_amount))}</p>
           <Progress value={budgetUsed} className="h-1 mt-2 bg-muted" />
         </div>
-        <div className="glass rounded-xl p-4 text-center">
-          <p className="text-xs text-muted-foreground mb-1">Creators Joined</p>
-          <p className="text-lg font-bold font-mono text-foreground">{campaign.total_submissions || 0}/{campaign.max_creators || "∞"}</p>
+        <div className="glass rounded-xl p-3.5 text-center">
+          <p className="text-[10px] text-muted-foreground mb-1">Creators</p>
+          <p className="text-base font-bold font-mono text-foreground">{campaign.total_submissions || 0}<span className="text-xs text-muted-foreground">/{campaign.max_creators || "∞"}</span></p>
         </div>
-        <div className="glass rounded-xl p-4 text-center">
-          <p className="text-xs text-muted-foreground mb-1">Views Tracked</p>
-          <p className="text-lg font-bold font-mono text-info">{formatViews(Number(campaign.total_verified_views) || 0)}</p>
+        <div className="glass rounded-xl p-3.5 text-center">
+          <p className="text-[10px] text-muted-foreground mb-1">Views</p>
+          <p className="text-base font-bold font-mono text-info">{formatViews(Number(campaign.total_verified_views) || 0)}</p>
         </div>
-        <div className="glass rounded-xl p-4 text-center">
-          <p className="text-xs text-muted-foreground mb-1">Days Left</p>
-          <p className="text-lg font-bold font-mono text-warning">{daysLeft}</p>
+        <div className="glass rounded-xl p-3.5 text-center">
+          <p className="text-[10px] text-muted-foreground mb-1">Days Left</p>
+          <p className="text-base font-bold font-mono text-warning flex items-center justify-center gap-1">
+            <Clock className="w-3.5 h-3.5" /> {daysLeft}
+          </p>
         </div>
       </div>
 
-      {/* Eligibility + Guidelines */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        <div className="glass rounded-xl p-6 space-y-4">
-          <h3 className="font-display font-bold text-foreground">Eligibility</h3>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm">
-              <CheckCircle className="w-4 h-4 text-success" />
-              <span className="text-foreground">Min {(campaign.min_followers || 0).toLocaleString("en-IN")} followers</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <CheckCircle className="w-4 h-4 text-success" />
-              <span className="text-foreground">Min {campaign.min_reliability_score || 3} reliability score</span>
-            </div>
+      {/* Eligibility */}
+      <div className="glass rounded-xl p-4">
+        <h3 className="font-display font-bold text-sm text-foreground mb-3">Eligibility</h3>
+        <div className="space-y-2.5">
+          <div className="flex items-center gap-2.5 text-xs">
+            <CheckCircle className="w-4 h-4 text-success shrink-0" />
+            <span className="text-foreground">Min {(campaign.min_followers || 0).toLocaleString("en-IN")} followers</span>
+          </div>
+          <div className="flex items-center gap-2.5 text-xs">
+            <CheckCircle className="w-4 h-4 text-success shrink-0" />
+            <span className="text-foreground">Min {campaign.min_reliability_score || 3} reliability score</span>
           </div>
         </div>
+      </div>
 
-        <div className="glass rounded-xl p-6 space-y-4">
-          <h3 className="font-display font-bold text-foreground">Content Guidelines</h3>
-          <p className="text-sm text-muted-foreground">{campaign.content_guidelines || "No specific guidelines provided."}</p>
-          <div className="flex flex-wrap gap-1.5">
-            {(campaign.hashtags || []).map((h: string) => (
-              <span key={h} className="badge-pill bg-primary/10 text-primary border border-primary/30 text-xs">{h}</span>
-            ))}
-          </div>
+      {/* Guidelines */}
+      <div className="glass rounded-xl p-4">
+        <h3 className="font-display font-bold text-sm text-foreground mb-2.5">Content Guidelines</h3>
+        <p className="text-xs text-muted-foreground mb-3">{campaign.content_guidelines || "No specific guidelines provided."}</p>
+        <div className="flex flex-wrap gap-1.5">
+          {(campaign.hashtags || []).map((h: string) => (
+            <span key={h} className="bg-primary/10 text-primary border border-primary/20 text-[10px] px-2.5 py-1 rounded-lg">{h}</span>
+          ))}
         </div>
       </div>
 
       {/* Do/Don't */}
       {((campaign.do_list && campaign.do_list.length > 0) || (campaign.dont_list && campaign.dont_list.length > 0)) && (
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div className="space-y-2.5">
           {campaign.do_list && campaign.do_list.length > 0 && (
-            <div className="glass rounded-xl p-6">
-              <h3 className="font-display font-bold text-success mb-3">✓ Do's</h3>
+            <div className="glass rounded-xl p-4">
+              <h3 className="font-display font-bold text-xs text-success mb-2.5">✓ Do's</h3>
               <ul className="space-y-2">
                 {campaign.do_list.map((item: string) => (
-                  <li key={item} className="flex items-start gap-2 text-sm text-foreground">
-                    <CheckCircle className="w-4 h-4 text-success shrink-0 mt-0.5" />{item}
+                  <li key={item} className="flex items-start gap-2 text-xs text-foreground">
+                    <CheckCircle className="w-3.5 h-3.5 text-success shrink-0 mt-0.5" />{item}
                   </li>
                 ))}
               </ul>
             </div>
           )}
           {campaign.dont_list && campaign.dont_list.length > 0 && (
-            <div className="glass rounded-xl p-6">
-              <h3 className="font-display font-bold text-destructive mb-3">✕ Don'ts</h3>
+            <div className="glass rounded-xl p-4">
+              <h3 className="font-display font-bold text-xs text-destructive mb-2.5">✕ Don'ts</h3>
               <ul className="space-y-2">
                 {campaign.dont_list.map((item: string) => (
-                  <li key={item} className="flex items-start gap-2 text-sm text-foreground">
-                    <AlertTriangle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />{item}
+                  <li key={item} className="flex items-start gap-2 text-xs text-foreground">
+                    <AlertTriangle className="w-3.5 h-3.5 text-destructive shrink-0 mt-0.5" />{item}
                   </li>
                 ))}
               </ul>

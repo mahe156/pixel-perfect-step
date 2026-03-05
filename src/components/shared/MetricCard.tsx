@@ -21,6 +21,14 @@ const colorMap = {
   warning: "text-warning",
 };
 
+const bgMap = {
+  primary: "bg-primary/10",
+  success: "bg-success/10",
+  info: "bg-info/10",
+  premium: "bg-premium/10",
+  warning: "bg-warning/10",
+};
+
 const MetricCard = ({
   icon,
   label,
@@ -33,28 +41,30 @@ const MetricCard = ({
 }: MetricCardProps) => {
   return (
     <motion.div
-      className="glass-hover rounded-xl p-3.5 sm:p-5"
-      whileHover={{ y: -4 }}
-      transition={{ duration: 0.2 }}
+      className="glass rounded-xl p-3 sm:p-5"
+      whileHover={{ y: -2 }}
+      transition={{ duration: 0.15 }}
     >
-      <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-        <div className={`${colorMap[color]} opacity-80`}>{icon}</div>
-        <span className="text-xs sm:text-sm text-muted-foreground truncate">{label}</span>
+      <div className="flex items-center gap-2 mb-2">
+        <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg ${bgMap[color]} flex items-center justify-center`}>
+          <div className={colorMap[color]}>{icon}</div>
+        </div>
       </div>
-      <div className={`text-lg sm:text-2xl font-bold ${colorMap[color]}`}>
+      <div className={`text-lg sm:text-2xl font-bold font-mono ${colorMap[color]}`}>
         <AnimatedNumber value={value} prefix={prefix} suffix={suffix} />
       </div>
+      <span className="text-[10px] sm:text-xs text-muted-foreground leading-tight">{label}</span>
       {change !== undefined && (
-        <div className="mt-1.5 sm:mt-2 flex items-center gap-1.5">
+        <div className="mt-1.5 flex items-center gap-1">
           <span
-            className={`text-[10px] sm:text-xs font-medium ${
+            className={`text-[10px] font-medium ${
               change >= 0 ? "text-success" : "text-destructive"
             }`}
           >
             {change >= 0 ? "↑" : "↓"} {Math.abs(change)}%
           </span>
           {changeLabel && (
-            <span className="text-[10px] sm:text-xs text-muted-foreground">{changeLabel}</span>
+            <span className="text-[10px] text-muted-foreground">{changeLabel}</span>
           )}
         </div>
       )}
