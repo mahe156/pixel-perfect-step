@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Check, Megaphone, Settings2, IndianRupee, FileText, Youtube, Instagram } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Megaphone, Settings2, IndianRupee, FileText, Youtube, Instagram, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,8 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { formatINR } from "@/lib/format";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const STEPS = [
   { id: 1, title: "Campaign Info", icon: <Megaphone className="w-4 h-4" /> },
@@ -25,8 +27,21 @@ const NICHES = ["Tech", "Fashion", "Food", "Travel", "Beauty", "Gaming", "Financ
 const LANGUAGES = ["Hindi", "English", "Tamil", "Telugu", "Marathi", "Bengali", "Kannada", "Malayalam", "Gujarati", "Punjabi"];
 
 const BrandCampaignNew = () => {
+  const { profile } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+
+  const handleBannerSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+    setBannerFile(file);
+    setBannerPreview(URL.createObjectURL(file));
+  };
 
   // Step 1
   const [title, setTitle] = useState("");
@@ -69,11 +84,37 @@ const BrandCampaignNew = () => {
     setter([...list, ""]);
   };
 
-  const handleSubmit = () => {
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
     if (!title || !description) {
       toast.error("Please fill in campaign title and description");
       return;
     }
+    setSubmitting(true);
+    let bannerUrl: string | null = null;
+    if (bannerFile) {
+      const ext = bannerFile.name.split(".").pop();
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("campaign-banners").upload(path, bannerFile);
+      if (upErr) { toast.error("Banner upload failed"); setSubmitting(false); return; }
+      bannerUrl = supabase.storage.from("campaign-banners").getPublicUrl(path).data.publicUrl;
+    }
+    const { error } = await supabase.from("campaigns").insert({
+      title, description, platform,
+      cpm_rate: cpmRate, total_budget: totalBudget,
+      max_creators: maxCreators, min_followers: minFollowers,
+      min_reliability_score: minReliability,
+      niche_tags: selectedNiches, language_tags: selectedLanguages,
+      hashtags: hashtags ? hashtags.split(",").map(h => h.trim()) : [],
+      do_list: doList.filter(Boolean), dont_list: dontList.filter(Boolean),
+      content_guidelines: contentGuidelines,
+      brand_id: profile?.id || null,
+      status: "draft" as const,
+      banner_url: bannerUrl,
+    });
+    setSubmitting(false);
+    if (error) { toast.error(error.message); return; }
     toast.success("Campaign created as draft! You can fund it from the campaign detail page.");
     navigate("/brand/campaigns");
   };
@@ -119,6 +160,24 @@ const BrandCampaignNew = () => {
             <Card className="glass border-border/50">
               <CardHeader><CardTitle className="font-display">Campaign Information</CardTitle></CardHeader>
               <CardContent className="space-y-5">
+                <div className="space-y-2">
+                  <Label>Banner Image</Label>
+                  <input ref={bannerInputRef} type="file" accept="image/*" className="hidden" onChange={handleBannerSelect} />
+                  <button
+                    type="button"
+                    onClick={() => bannerInputRef.current?.click()}
+                    className="w-full h-32 rounded-lg border-2 border-dashed border-border/50 hover:border-primary/40 transition-colors flex items-center justify-center overflow-hidden bg-muted/30"
+                  >
+                    {bannerPreview ? (
+                      <img src={bannerPreview} alt="Banner preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="flex flex-col items-center gap-1.5 text-muted-foreground">
+                        <ImagePlus className="w-6 h-6" />
+                        <span className="text-xs">Click to upload campaign banner</span>
+                      </div>
+                    )}
+                  </button>
+                </div>
                 <div className="space-y-2">
                   <Label>Campaign Title</Label>
                   <Input placeholder="e.g. Summer Fashion Haul 2026" value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -285,8 +344,8 @@ const BrandCampaignNew = () => {
             Next <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         ) : (
-          <Button onClick={handleSubmit} className="gap-2">
-            <Check className="w-4 h-4" /> Create Campaign
+          <Button onClick={handleSubmit} disabled={submitting} className="gap-2">
+            <Check className="w-4 h-4" /> {submitting ? "Creating..." : "Create Campaign"}
           </Button>
         )}
       </div>

@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Search, Megaphone, Pause, Play, XCircle, Plus, RefreshCw } from "lucide-react";
+import { Search, Megaphone, Pause, Play, XCircle, Plus, RefreshCw, ImagePlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -54,6 +54,18 @@ const AdminCampaigns = () => {
     start_date: "", end_date: "",
   });
   const [creating, setCreating] = useState(false);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+
+  const handleBannerSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+    setBannerFile(file);
+    setBannerPreview(URL.createObjectURL(file));
+  };
 
   useEffect(() => { fetchCampaigns(); }, []);
 
@@ -61,7 +73,7 @@ const AdminCampaigns = () => {
     setLoading(true);
     const { data } = await supabase
       .from("campaigns")
-      .select("id, title, platform, status, cpm_rate, total_budget, spent_amount, total_submissions, total_verified_views, created_at, brand_id")
+      .select("id, title, platform, status, cpm_rate, total_budget, spent_amount, total_submissions, total_verified_views, created_at, brand_id, banner_url")
       .order("created_at", { ascending: false });
     setCampaigns((data as CampaignRow[]) || []);
     setLoading(false);
@@ -74,9 +86,20 @@ const AdminCampaigns = () => {
     fetchCampaigns();
   };
 
+  const uploadBanner = async (): Promise<string | null> => {
+    if (!bannerFile) return null;
+    const ext = bannerFile.name.split(".").pop();
+    const path = `${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from("campaign-banners").upload(path, bannerFile);
+    if (error) { toast.error("Banner upload failed"); return null; }
+    const { data } = supabase.storage.from("campaign-banners").getPublicUrl(path);
+    return data.publicUrl;
+  };
+
   const createCampaign = async () => {
     if (!form.title || !form.description) { toast.error("Title and description required"); return; }
     setCreating(true);
+    const bannerUrl = await uploadBanner();
     const { error } = await supabase.from("campaigns").insert({
       title: form.title,
       description: form.description,
@@ -90,12 +113,15 @@ const AdminCampaigns = () => {
       end_date: form.end_date || null,
       brand_id: profile?.id || null,
       status: "active" as const,
+      banner_url: bannerUrl,
     });
     setCreating(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Campaign created!");
     setCreateOpen(false);
     setForm({ title: "", description: "", platform: "youtube", cpm_rate: "80", total_budget: "100000", max_creators: "100", min_followers: "1000", content_guidelines: "", start_date: "", end_date: "" });
+    setBannerFile(null);
+    setBannerPreview(null);
     fetchCampaigns();
   };
 
@@ -158,9 +184,18 @@ const AdminCampaigns = () => {
                 return (
                   <TableRow key={c.id} className="border-border/50">
                     <TableCell>
-                      <div>
-                        <p className="font-medium text-foreground text-sm">{c.title}</p>
-                        <p className="text-xs text-muted-foreground capitalize">{c.platform} · {new Date(c.created_at).toLocaleDateString()}</p>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-muted overflow-hidden flex-shrink-0">
+                          {(c as any).banner_url ? (
+                            <img src={(c as any).banner_url} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-xs font-bold text-muted-foreground">{c.title.charAt(0)}</div>
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground text-sm">{c.title}</p>
+                          <p className="text-xs text-muted-foreground capitalize">{c.platform} · {new Date(c.created_at).toLocaleDateString()}</p>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell><Badge className={`${sc.className} text-xs`}>{sc.label}</Badge></TableCell>
@@ -208,6 +243,24 @@ const AdminCampaigns = () => {
         <DialogContent className="glass border-border max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle className="font-display">Create New Campaign</DialogTitle></DialogHeader>
           <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Banner Image</Label>
+              <input ref={bannerInputRef} type="file" accept="image/*" className="hidden" onChange={handleBannerSelect} />
+              <button
+                type="button"
+                onClick={() => bannerInputRef.current?.click()}
+                className="w-full h-28 rounded-lg border-2 border-dashed border-border/50 hover:border-primary/40 transition-colors flex items-center justify-center overflow-hidden bg-muted/30"
+              >
+                {bannerPreview ? (
+                  <img src={bannerPreview} alt="Banner preview" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="flex flex-col items-center gap-1.5 text-muted-foreground">
+                    <ImagePlus className="w-6 h-6" />
+                    <span className="text-xs">Click to upload banner</span>
+                  </div>
+                )}
+              </button>
+            </div>
             <div className="space-y-2">
               <Label>Title</Label>
               <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Campaign title" />
