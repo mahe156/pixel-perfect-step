@@ -14,7 +14,7 @@ const CreatorLayout = () => {
         {!isMobile && <CreatorSidebar />}
         <div className="flex-1 flex flex-col min-w-0">
           <DashboardHeader walletBalance={0} />
-          <main className="flex-1 p-3 sm:p-6 overflow-auto pb-20 sm:pb-6">
+          <main className="flex-1 px-4 py-3 sm:p-6 overflow-auto pb-24 sm:pb-6">
             <Outlet />
           </main>
           {isMobile && <CreatorBottomNav />}
