@@ -29,6 +29,22 @@ const bgMap = {
   warning: "bg-warning/10",
 };
 
+const glowMap = {
+  primary: "shadow-[0_0_20px_hsl(24_100%_50%/0.08)]",
+  success: "shadow-[0_0_20px_hsl(160_100%_42%/0.08)]",
+  info: "shadow-[0_0_20px_hsl(216_100%_65%/0.08)]",
+  premium: "shadow-[0_0_20px_hsl(260_100%_72%/0.08)]",
+  warning: "shadow-[0_0_20px_hsl(43_100%_70%/0.08)]",
+};
+
+const borderGlowMap = {
+  primary: "border-primary/15",
+  success: "border-success/15",
+  info: "border-info/15",
+  premium: "border-premium/15",
+  warning: "border-warning/15",
+};
+
 const MetricCard = ({
   icon,
   label,
@@ -41,33 +57,34 @@ const MetricCard = ({
 }: MetricCardProps) => {
   return (
     <motion.div
-      className="glass rounded-xl p-3 sm:p-5"
-      whileHover={{ y: -2 }}
+      className={`relative overflow-hidden rounded-2xl p-3.5 sm:p-5 bg-card/80 backdrop-blur-xl border ${borderGlowMap[color]} ${glowMap[color]}`}
+      whileHover={{ y: -2, scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
       transition={{ duration: 0.15 }}
     >
-      <div className="flex items-center gap-2 mb-2">
-        <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg ${bgMap[color]} flex items-center justify-center`}>
-          <div className={colorMap[color]}>{icon}</div>
-        </div>
-      </div>
-      <div className={`text-lg sm:text-2xl font-bold font-mono ${colorMap[color]}`}>
-        <AnimatedNumber value={value} prefix={prefix} suffix={suffix} />
-      </div>
-      <span className="text-[10px] sm:text-xs text-muted-foreground leading-tight">{label}</span>
-      {change !== undefined && (
-        <div className="mt-1.5 flex items-center gap-1">
-          <span
-            className={`text-[10px] font-medium ${
-              change >= 0 ? "text-success" : "text-destructive"
-            }`}
-          >
-            {change >= 0 ? "↑" : "↓"} {Math.abs(change)}%
-          </span>
-          {changeLabel && (
-            <span className="text-[10px] text-muted-foreground">{changeLabel}</span>
+      {/* Subtle gradient accent */}
+      <div className={`absolute top-0 right-0 w-20 h-20 rounded-full ${bgMap[color]} blur-2xl opacity-60 -translate-y-1/2 translate-x-1/2`} />
+      
+      <div className="relative z-10">
+        <div className="flex items-center justify-between mb-2.5">
+          <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl ${bgMap[color]} flex items-center justify-center`}>
+            <div className={colorMap[color]}>{icon}</div>
+          </div>
+          {change !== undefined && (
+            <span
+              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                change >= 0 ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
+              }`}
+            >
+              {change >= 0 ? "↑" : "↓"}{Math.abs(change)}%
+            </span>
           )}
         </div>
-      )}
+        <div className={`text-xl sm:text-2xl font-bold font-mono ${colorMap[color]} leading-none`}>
+          <AnimatedNumber value={value} prefix={prefix} suffix={suffix} />
+        </div>
+        <span className="text-[10px] sm:text-xs text-muted-foreground mt-1 block">{label}</span>
+      </div>
     </motion.div>
   );
 };

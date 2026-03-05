@@ -22,20 +22,25 @@ const DashboardHeader = ({ walletBalance }: DashboardHeaderProps) => {
   };
 
   return (
-    <header className="h-12 flex items-center justify-between border-b border-border/30 px-4 bg-background/95 backdrop-blur-xl sticky top-0 z-30">
+    <header className="h-13 flex items-center justify-between border-b border-border/20 px-4 bg-background/80 backdrop-blur-2xl sticky top-0 z-30">
       {!isMobile ? (
         <SidebarTrigger className="text-muted-foreground" />
       ) : (
-        <span className="font-display font-bold text-base text-foreground tracking-tight">
-          Clip<span className="text-primary">Rupee</span>
-        </span>
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+            <span className="text-primary-foreground font-bold text-xs">C</span>
+          </div>
+          <span className="font-display font-bold text-base text-foreground tracking-tight">
+            Clip<span className="text-primary">Rupee</span>
+          </span>
+        </div>
       )}
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         {walletBalance !== undefined && (
-          <div className="flex items-center gap-1.5 bg-success/10 border border-success/20 rounded-full px-2.5 py-1">
-            <Wallet className="w-3 h-3 text-success" />
-            <span className="text-[11px] font-mono font-semibold text-success">
+          <div className="flex items-center gap-1.5 bg-success/8 border border-success/15 rounded-full px-3 py-1.5">
+            <Wallet className="w-3.5 h-3.5 text-success" />
+            <span className="text-[11px] font-mono font-bold text-success">
               {formatINR(walletBalance)}
             </span>
           </div>
@@ -44,7 +49,7 @@ const DashboardHeader = ({ walletBalance }: DashboardHeaderProps) => {
         <NotificationBell />
 
         <div className="flex items-center gap-1.5">
-          <div className="w-7 h-7 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[11px] font-bold">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/30 to-premium/20 border border-primary/20 text-primary flex items-center justify-center text-xs font-bold">
             {profile?.full_name?.charAt(0) || "U"}
           </div>
           {!isMobile && (
