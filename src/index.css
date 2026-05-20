@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Work+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,77 +6,80 @@
 
 @layer base {
   :root {
-    /* ClipRupee Dark Luxury Theme */
-    --background: 240 20% 2%;
-    --foreground: 240 10% 96%;
+    /* ClipRupee — Paper & Ink (Editorial Monochrome) */
+    /* Bg: paper cream  Fg: ink black  One neutral mid-gray. NO rainbow. */
+    --background: 40 24% 94%;          /* #f5f3ee paper cream */
+    --foreground: 0 0% 5%;             /* #0d0d0d ink */
 
-    --card: 240 15% 5%;
-    --card-foreground: 240 10% 96%;
+    --card: 40 20% 97%;                /* slightly lighter paper */
+    --card-foreground: 0 0% 5%;
 
-    --popover: 240 15% 7%;
-    --popover-foreground: 240 10% 96%;
+    --popover: 40 20% 97%;
+    --popover-foreground: 0 0% 5%;
 
-    --primary: 24 100% 50%;
-    --primary-foreground: 0 0% 100%;
-    --primary-glow: 24 100% 60%;
+    /* Primary = ink. Everything actionable is monochrome. */
+    --primary: 0 0% 5%;
+    --primary-foreground: 40 24% 94%;
+    --primary-glow: 0 0% 18%;
 
-    --secondary: 240 10% 10%;
-    --secondary-foreground: 240 10% 96%;
+    --secondary: 36 14% 89%;           /* warm off-paper */
+    --secondary-foreground: 0 0% 5%;
 
-    --muted: 240 10% 14%;
-    --muted-foreground: 240 12% 52%;
+    --muted: 36 14% 89%;
+    --muted-foreground: 0 0% 38%;      /* neutral mid-gray for secondary copy */
 
-    --accent: 240 10% 10%;
-    --accent-foreground: 240 10% 96%;
+    --accent: 36 14% 89%;
+    --accent-foreground: 0 0% 5%;
 
-    --destructive: 348 80% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 0% 5%;            /* keep tonal; no red accents */
+    --destructive-foreground: 40 24% 94%;
 
-    --border: 240 12% 16%;
-    --border-active: 24 100% 50% / 0.25;
-    --input: 240 12% 16%;
-    --ring: 24 100% 50%;
+    --border: 0 0% 5% / 0.1;
+    --border-active: 0 0% 5% / 0.4;
+    --input: 0 0% 5% / 0.12;
+    --ring: 0 0% 5%;
 
-    --radius: 0.75rem;
+    --radius: 0.25rem;                 /* sharper editorial corners */
 
-    /* Semantic colors */
-    --success: 160 100% 42%;
-    --success-foreground: 0 0% 100%;
-    --info: 216 100% 65%;
-    --info-foreground: 0 0% 100%;
-    --premium: 260 100% 72%;
-    --premium-foreground: 0 0% 100%;
-    --warning: 43 100% 70%;
-    --warning-foreground: 0 0% 0%;
+    /* Semantic colors — all collapsed to monochrome ink.
+       Components using these tokens will read as neutral, killing the rainbow. */
+    --success: 0 0% 5%;
+    --success-foreground: 40 24% 94%;
+    --info: 0 0% 5%;
+    --info-foreground: 40 24% 94%;
+    --premium: 0 0% 5%;
+    --premium-foreground: 40 24% 94%;
+    --warning: 0 0% 5%;
+    --warning-foreground: 40 24% 94%;
 
     /* Surfaces */
-    --surface: 240 15% 5%;
-    --elevated: 240 15% 7%;
+    --surface: 40 20% 97%;
+    --elevated: 40 22% 99%;
 
     /* Text hierarchy */
-    --text-primary: 240 10% 96%;
-    --text-secondary: 240 12% 52%;
-    --text-tertiary: 240 12% 32%;
+    --text-primary: 0 0% 5%;
+    --text-secondary: 0 0% 38%;
+    --text-tertiary: 0 0% 60%;
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(24 100% 50%), hsl(24 100% 60%));
-    --gradient-hero: linear-gradient(135deg, hsl(24 100% 50% / 0.2), hsl(280 60% 40% / 0.15), hsl(240 20% 2%));
-    --gradient-glass: linear-gradient(135deg, hsl(0 0% 100% / 0.04), hsl(0 0% 100% / 0.01));
+    /* Gradients — flat editorial, no neon */
+    --gradient-primary: linear-gradient(135deg, hsl(0 0% 5%), hsl(0 0% 18%));
+    --gradient-hero: linear-gradient(180deg, hsl(40 24% 94%), hsl(36 14% 89%));
+    --gradient-glass: linear-gradient(135deg, hsl(0 0% 5% / 0.02), hsl(0 0% 5% / 0));
 
-    /* Shadows */
-    --shadow-glow: 0 0 40px hsl(24 100% 50% / 0.08);
-    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.3);
-    --shadow-elevated: 0 8px 32px hsl(0 0% 0% / 0.4);
+    /* Shadows — soft, no glow */
+    --shadow-glow: 0 1px 0 hsl(0 0% 5% / 0.04);
+    --shadow-card: 0 1px 2px hsl(0 0% 5% / 0.06);
+    --shadow-elevated: 0 8px 24px hsl(0 0% 5% / 0.08);
 
     /* Sidebar */
-    --sidebar-background: 240 15% 4%;
-    --sidebar-foreground: 240 10% 96%;
-    --sidebar-primary: 24 100% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 10% 10%;
-    --sidebar-accent-foreground: 240 10% 96%;
-    --sidebar-border: 240 12% 12%;
-    --sidebar-ring: 24 100% 50%;
+    --sidebar-background: 40 20% 97%;
+    --sidebar-foreground: 0 0% 5%;
+    --sidebar-primary: 0 0% 5%;
+    --sidebar-primary-foreground: 40 24% 94%;
+    --sidebar-accent: 36 14% 89%;
+    --sidebar-accent-foreground: 0 0% 5%;
+    --sidebar-border: 0 0% 5% / 0.1;
+    --sidebar-ring: 0 0% 5%;
   }
 }
 
@@ -87,44 +90,33 @@
 
   body {
     @apply bg-background text-foreground font-body antialiased;
+    font-feature-settings: "ss01", "cv11";
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-display;
+    letter-spacing: -0.01em;
   }
 }
 
 @layer components {
   .glass {
-    @apply bg-card/60 backdrop-blur-xl border border-border/50;
+    @apply bg-card border border-border;
   }
 
   .glass-hover {
-    @apply glass transition-all duration-200 hover:-translate-y-1 hover:shadow-[var(--shadow-glow)];
+    @apply glass transition-all duration-200 hover:border-foreground/30;
   }
 
   .gradient-border {
     position: relative;
     background: hsl(var(--card));
     border-radius: var(--radius);
-  }
-
-  .gradient-border::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    padding: 1px;
-    border-radius: inherit;
-    background: linear-gradient(135deg, hsl(var(--primary) / 0.5), hsl(var(--premium) / 0.3), transparent);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
+    border: 1px solid hsl(var(--foreground) / 0.1);
   }
 
   .text-gradient {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    color: hsl(var(--foreground));
   }
 
   .grain-texture {
@@ -135,7 +127,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    opacity: 0.03;
+    opacity: 0.025;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
     pointer-events: none;
     z-index: 1;
@@ -148,21 +140,26 @@
   }
 
   .badge-pill {
-    @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-medium;
+    @apply inline-flex items-center rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-widest;
+  }
+
+  .editorial-rule {
+    @apply border-b border-foreground/15 pb-2;
   }
 }
 
 @layer utilities {
   .font-display {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Instrument Serif', serif;
+    font-weight: 400;
   }
 
   .font-body {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Work Sans', sans-serif;
   }
 
   .font-mono {
-    font-family: 'DM Mono', monospace;
+    font-family: 'JetBrains Mono', monospace;
   }
 
   .scrollbar-hide {
@@ -189,14 +186,8 @@
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px) scale(1); }
-  33% { transform: translateY(-15px) scale(1.02); }
-  66% { transform: translateY(8px) scale(0.98); }
-}
-
-@keyframes orbit {
-  0% { transform: rotate(0deg) translateX(30px) rotate(0deg); }
-  100% { transform: rotate(360deg) translateX(30px) rotate(-360deg); }
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
 }
 
 @keyframes gradient-shift {
@@ -206,6 +197,6 @@
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px hsl(24 100% 50% / 0.15); }
-  50% { box-shadow: 0 0 40px hsl(24 100% 50% / 0.3); }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
