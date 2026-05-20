@@ -22,25 +22,25 @@ const DashboardHeader = ({ walletBalance }: DashboardHeaderProps) => {
   };
 
   return (
-    <header className="h-13 flex items-center justify-between border-b border-border/20 px-4 bg-background/80 backdrop-blur-2xl sticky top-0 z-30">
+    <header className="h-14 flex items-center justify-between border-b border-foreground/10 px-5 bg-background sticky top-0 z-30">
       {!isMobile ? (
-        <SidebarTrigger className="text-muted-foreground" />
+        <SidebarTrigger className="text-foreground/60" />
       ) : (
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-xs">C</span>
+          <div className="w-7 h-7 rounded-full bg-foreground flex items-center justify-center">
+            <span className="text-background font-semibold text-xs">C</span>
           </div>
-          <span className="font-display font-bold text-base text-foreground tracking-tight">
-            Clip<span className="text-primary">Rupee</span>
+          <span className="font-body font-semibold text-sm text-foreground tracking-tight">
+            ClipRupee
           </span>
         </div>
       )}
 
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-3">
         {walletBalance !== undefined && (
-          <div className="flex items-center gap-1.5 bg-success/8 border border-success/15 rounded-full px-3 py-1.5">
-            <Wallet className="w-3.5 h-3.5 text-success" />
-            <span className="text-[11px] font-mono font-bold text-success">
+          <div className="flex items-center gap-1.5 border border-foreground/15 px-3 py-1">
+            <Wallet className="w-3.5 h-3.5 text-foreground/60" />
+            <span className="text-[11px] font-mono font-medium text-foreground">
               {formatINR(walletBalance)}
             </span>
           </div>
@@ -49,7 +49,7 @@ const DashboardHeader = ({ walletBalance }: DashboardHeaderProps) => {
         <NotificationBell />
 
         <div className="flex items-center gap-1.5">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/30 to-premium/20 border border-primary/20 text-primary flex items-center justify-center text-xs font-bold">
+          <div className="w-8 h-8 rounded-full border border-foreground text-foreground flex items-center justify-center text-xs font-medium">
             {profile?.full_name?.charAt(0) || "U"}
           </div>
           {!isMobile && (
@@ -57,7 +57,7 @@ const DashboardHeader = ({ walletBalance }: DashboardHeaderProps) => {
               variant="ghost"
               size="sm"
               onClick={handleSignOut}
-              className="text-muted-foreground hover:text-foreground h-7 w-7 p-0"
+              className="text-foreground/60 hover:text-foreground h-7 w-7 p-0"
             >
               <LogOut className="w-3.5 h-3.5" />
             </Button>
