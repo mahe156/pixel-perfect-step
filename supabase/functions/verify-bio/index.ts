@@ -45,10 +45,10 @@ Deno.serve(async (req) => {
     let input: Record<string, unknown>;
 
     if (platform === "youtube") {
-      actorId = "bernardo~youtube-channel-scraper";
+      actorId = "johnvc~youtube-shorts-api";
       input = {
-        channelUrls: [`https://www.youtube.com/@${handle}`],
-        maxResults: 1,
+        channels: [`https://www.youtube.com/@${handle}`],
+        maxResultsShorts: 1,
       };
     } else if (platform === "instagram") {
       actorId = "apify~instagram-profile-scraper";
@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
           if (bioText.includes(verification_code.toLowerCase())) {
             verified = true;
             // Extract follower/subscriber count
-            followerCount = profile.subscriberCount || profile.followersCount || profile.followers || profile.subscribers || 0;
+            followerCount = profile.subscriberCount || profile.followersCount || profile.followers || profile.subscribers || profile.numberOfSubscribers || 0;
           }
         }
         break;

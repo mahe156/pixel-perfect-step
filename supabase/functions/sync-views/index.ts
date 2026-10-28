@@ -68,13 +68,12 @@ Deno.serve(async (req) => {
       const videoUrls = ytSubmissions.map((s) => s.content_url);
 
       const runRes = await fetch(
-        `https://api.apify.com/v2/acts/bernardo~youtube-video-scraper/runs?token=${APIFY_API_TOKEN}`,
+        `https://api.apify.com/v2/acts/johnvc~youtube-shorts-api/runs?token=${APIFY_API_TOKEN}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             startUrls: videoUrls.map((url: string) => ({ url })),
-            maxResults: videoUrls.length,
           }),
         }
       );
@@ -107,9 +106,12 @@ Deno.serve(async (req) => {
             const videoUrl = item.url || item.videoUrl;
             const views = item.viewCount || item.views || 0;
             const sub = ytSubmissions.find(
-              (s) => s.content_url === videoUrl || s.yt_video_id === item.videoId
+              (s) =>
+                s.content_url === videoUrl ||
+                s.yt_video_id === item.videoId ||
+                (item.id && s.content_url?.includes(item.id))
             );
-            if (sub) {
+            if (sub && !item.error) {
               results.push({ id: sub.id, views });
             }
           }
